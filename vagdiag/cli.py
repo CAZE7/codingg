@@ -9,6 +9,7 @@ Beispiele::
     vagdiag blocks --address 01 --group 1 --watch
     vagdiag coding --address 01 --set 00003
     vagdiag adapt --address 01 --read 4
+    vagdiag map  --address 01           # Kanalmap aller Bloecke und Kanaele
     vagdiag dtc 16804                   # Fehlercode nachschlagen
     vagdiag serve --port 8000           # Weboberflaeche starten
 """
@@ -22,6 +23,7 @@ import time
 from pathlib import Path
 
 from . import APP_NAME, APP_SUBTITLE, __version__, address_text
+from .channelmap import channel_map, to_csv, write_csv
 from .client import DiagnosticError, VehicleSession
 from .db import Database
 from .log import DEFAULT_INTERVAL as DEFAULT_LOG_INTERVAL
@@ -344,10 +346,33 @@ def cmd_coding(args) -> int:
             if args.set is not None:
                 result = module.write_coding(args.set)
                 print(f"Codierung geschrieben: {result}")
+            for option, value in (("set_bit", True), ("clear_bit", False)):
+                specification = getattr(args, option, None)
+                if specification is None:
+                    continue
+                byte_text, _, bit_text = str(specification).partition(".")
+                result = module.coding_set_bit(
+                    int(byte_text), int(bit_text or 0), value,
+                    login=int(args.login) if args.login is not None else None,
+                )
+                print(
+                    f"Bit {result['byte']}.{result['bit']} "
+                    f"{'gesetzt' if value else 'geloescht'} - Codierung {result['coding']}"
+                )
             coding = module.coding()
             _print_header(f"Codierung Adresse {address_text(address)} ({module.module.name})")
             print(f"   Codierung    : {coding['coding']}")
             print(f"   Protokoll    : {coding['protocol']}")
+            if args.show_bits:
+                bits = module.coding_bits()
+                print("   Gesetzte Bits:")
+                for entry in bits:
+                    print(
+                        f"      Byte {entry['byte']:>2}, Bit {entry['bit_in_byte']} "
+                        f"(Wert {2 ** entry['bit']:>6})  {entry['text']}"
+                    )
+                if not bits:
+                    print("      keine")
             label = module.label() or {}
             entries = label.get("coding", [])
             if any(entry.get("kind") == "C" for entry in entries):
@@ -412,6 +437,36 @@ def cmd_adapt(args) -> int:
                     f"Wert {current['value']}   Bereich {entry.get('min_value')}-{entry.get('max_value')} "
                     f"{entry.get('unit') or ''}"
                 )
+        return 0
+    finally:
+        session.stop()
+
+
+def cmd_map(args) -> int:
+    """Kanalmap: alle Messwertebloecke und Anpassungskanaele ausgeben."""
+    session = _session(args)
+    try:
+        session.start()
+        address = int(args.address, 16)
+        with session.open_module(address) as module:
+            groups = [int(group) for group in args.groups.split(",")] if args.groups else None
+            rows = channel_map(module, groups=groups, basic=args.basic)
+            module_text = f"{address_text(address)} {module.module.name}"
+            if args.json:
+                print(json.dumps(rows, indent=2, ensure_ascii=False))
+                return 0
+            if args.out:
+                path = write_csv(args.out, rows, vehicle=session.name, module=module_text)
+                print(f"Kanalmap geschrieben: {path} ({len(rows)} Zeilen)")
+                return 0
+            _print_header(f"Kanalmap Adresse {address_text(address)} ({module.module.name})")
+            for row in rows:
+                print(
+                    f"   {row['art'][:14]:<14} {row['gruppe']:>4} {str(row['feld']):>3}  "
+                    f"{row['text'][:36]:<36} {str(row['wert']):>14} {row['einheit'][:6]:<6} "
+                    f"{row['bereich']}"
+                )
+            print(f"\n   {len(rows)} Zeilen - als Datei mit --out <datei.csv>")
         return 0
     finally:
         session.stop()
@@ -852,6 +907,13 @@ def build_parser() -> argparse.ArgumentParser:
     coding.add_argument("--address", default="01")
     coding.add_argument("--set", default=None, help="neue Codierung")
     coding.add_argument("--login", default=None, help="Login-Code vor dem Schreiben")
+    coding.add_argument(
+        "--set-bit", default=None, help="Bit setzen, z. B. 3.2 (Byte 3, Bit 2)"
+    )
+    coding.add_argument("--clear-bit", default=None, help="Bit loeschen, z. B. 3.2")
+    coding.add_argument(
+        "--show-bits", action="store_true", help="gesetzte Bits mit Codierhilfe anzeigen"
+    )
     coding.set_defaults(func=cmd_coding)
 
     adapt = sub.add_parser("adapt", parents=[common], help="Anpassungskanaele lesen/schreiben")
@@ -860,6 +922,16 @@ def build_parser() -> argparse.ArgumentParser:
     adapt.add_argument("--set", default=None, help="Kanal schreiben, z. B. 4=32768")
     adapt.add_argument("--json", action="store_true")
     adapt.set_defaults(func=cmd_adapt)
+
+    map_parser = sub.add_parser(
+        "map", parents=[common], help="Kanalmap: alle Werte eines Steuergeraets"
+    )
+    map_parser.add_argument("--address", default="01")
+    map_parser.add_argument("--groups", default=None, help="nur diese Bloecke, z. B. 1,4,11")
+    map_parser.add_argument("--basic", action="store_true", help="Grundeinstellungsbloecke")
+    map_parser.add_argument("--out", default=None, help="CSV-Datei schreiben")
+    map_parser.add_argument("--json", action="store_true")
+    map_parser.set_defaults(func=cmd_map)
 
     dtc = sub.add_parser("dtc", parents=[common], help="Fehlercode in der Datenbank nachschlagen")
     dtc.add_argument("code", nargs="?", default=None, help="z. B. 16804, P0420 oder 00575")

@@ -14,6 +14,7 @@ JSON-Schnittstelle:
 ``GET  /api/blocks/<addr>``      Messwerteblock (``?group=1&basic=0``)
 ``POST /api/coding/<addr>``      Codierung schreiben (``{"value": "...", "login": "..."}``)
 ``POST /api/adapt/<addr>``       Anpassung lesen/schreiben (``{"channel": 4, "value": 33000}``)
+``GET  /api/map/<addr>``         Kanalmap (JSON oder ``?format=csv``)
 ``GET  /api/actuator/<addr>``    Stellgliedliste und Grundeinstellungsbloecke
 ``POST /api/actuator/<addr>``    Stellglied ansteuern / Grundeinstellung schalten
 ``GET  /api/obd``                OBD-II-Uebersicht (Transport, Bereitschaft, Fehler, Info)
@@ -40,6 +41,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 from .. import APP_NAME, APP_SUBTITLE, __version__, address_text
 from ..client import DiagnosticError, VehicleSession
 from ..db import Database
+from ..channelmap import channel_map, to_csv
 from ..log import LogRecorder, row_from_block
 from ..obd.scan import format_autoscan
 from ..obd.session import ObdSession
@@ -269,6 +271,14 @@ class _AppState:
         return self._last_report
 
 
+def _coding_bits(module) -> list[dict]:
+    """Gesetzte Codierbits - nie kritisch, die Anzeige bleibt sonst leer."""
+    try:
+        return module.coding_bits()
+    except Exception:  # noqa: BLE001 - Codierung nicht lesbar
+        return []
+
+
 def _columns_of(block: dict) -> list:
     """Spalten eines gelesenen Messwerteblocks (fuer die Aufzeichnung)."""
     from ..log import Column
@@ -404,6 +414,22 @@ class VagdiagRequestHandler(BaseHTTPRequestHandler):
                     content_type="text/csv",
                 )
                 return
+            if route.startswith("/api/map/"):
+                address = self._address(route.split("/api/map/", 1)[1])
+                with self.state.with_module(address) as module:
+                    rows = channel_map(module)
+                    if query.get("format") == "csv":
+                        self._send_text(
+                            to_csv(
+                                rows,
+                                vehicle=self.state.session.name,
+                                module=f"{address_text(address)} {module.module.name}",
+                            ),
+                            content_type="text/csv",
+                        )
+                    else:
+                        self._send_json({"address": address, "rows": rows})
+                return
             if route.startswith("/api/actuator/"):
                 address = self._address(route.split("/api/actuator/", 1)[1])
                 with self.state.with_module(address) as module:
@@ -464,12 +490,18 @@ class VagdiagRequestHandler(BaseHTTPRequestHandler):
                 with self.state.with_module(address) as module:
                     if body.get("login"):
                         module.login(int(str(body["login"])))
-                    if body.get("value") is not None:
+                    if body.get("on") is not None and body.get("byte") is not None:
+                        # Langcodierung: einzelnes Bit setzen oder loeschen
+                        result = module.coding_set_bit(
+                            int(body["byte"]), int(body.get("bit", 0)), bool(body["on"])
+                        )
+                    elif body.get("value") is not None:
                         result = module.write_coding(str(body["value"]))
                     else:
                         result = {"ok": True}
                     payload = module.coding()
                     payload.update(result)
+                    payload["bits"] = _coding_bits(module)
                     self._send_json(payload)
                 return
             if route == "/api/obd":
@@ -543,6 +575,7 @@ class VagdiagRequestHandler(BaseHTTPRequestHandler):
             }
             if query.get("block"):
                 payload["block"] = module.read_block(int(query["block"]))
+            payload["bits"] = _coding_bits(module)
             self._send_json(payload)
 
 

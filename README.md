@@ -37,12 +37,13 @@ Autoscan abgeschlossen in 6.3 s - 6/6 Steuergeraete antworten, 7 Fehlercode(s).
 | --- | --- |
 | Fehlerspeicher | Lesen und Loeschen; VAG-5-stellig (KWP1281), SAE/OBD-II (KWP2000) und UDS-Codes mit Statusbits ("statisch", "sporadisch", ...) |
 | Messwerte | Messwertebloecke als (Sensortyp, A, B)-Tripel, umgerechnet ueber die Formeltabelle der Sensortypen 1-70; Texte, Einheiten und Grenzwerte aus den Label-Dateien |
-| Codierung | Codierung lesen und schreiben (inkl. Login), Codierhilfen der Label-Datei |
+| Codierung | Codierung lesen und schreiben (inkl. Login), Codierhilfen der Label-Datei, Langcodierung auf Bit-Ebene (Byte/Bit setzen und loeschen, gesetzte Bits mit Text) |
 | Anpassung | Kanaele lesen, schreiben, testen (KWP1281 0x21/0x22/0x2A, KWP2000 0x30/0x31, UDS 0x2F/0x31) |
 | Stellglieddiagnose | Liste aus der Labeldatei (A-Eintraege), einzelne Stellglieder ansteuern und wieder abschalten (KWP1281 0x04, KWP2000 0x30, UDS 0x31/Routine) |
 | Grundeinstellung | Grundstellungsbloecke (B-Eintraege) starten und beenden, Werte dabei live lesen (KWP1281 0x28/0x29, KWP2000/UDS Routine `FC<Gruppe>`) |
 | OBD-II / EOBD | Modi 01 bis 0A: Live-Daten, Freeze Frame, Fehlerspeicher (gespeichert/schwebend/permanent), Loeschen, Monitortestergebnisse, Fahrzeuginformation, Bereitschaftsbits (ISO 15765-4 auf CAN 0x7E0/0x7E8, ISO 14230 auf der K-Line) |
 | Log | Messwerte mitschreiben: Spalten aus Blockspalte, Text und Einheit, Semikolon-getrennte CSV-Datei mit Zeitstempel - als Kommando und als Reiter der Oberflaeche |
+| Kanalmap | Alle Messwertebloecke und Anpassungskanaele eines Steuergeraets als Tabelle oder CSV-Datei (`vagdiag map`, Weboberflaeche) |
 | Autoscan | Adressplan abarbeiten, Identifikation + Fehlerspeicher, Bericht im VCDS-Textformat |
 | Datenbank | SQLite: Fahrzeuge, Steuergeraete, Label-Dateien, Messwert-/Grundeinstellungs-/Stellglied-/Codier-/Anpassungseintraege, Fehlercodes (VAG, SAE, UDS) |
 | Weboberflaeche | Fahrzeugzustand, Live-Messwerte, Modulliste, Fehlerspeicher, Codierung, Anpassung, Stellglieder, OBD-II, Log, Autoscan, Busprotokoll - im VCDS-Look, ohne externe Ressourcen |
@@ -63,7 +64,8 @@ python3 -m vagdiag.cli info --vehicle "VW Golf IV 1.9 TDI (2001)" --address 01
 python3 -m vagdiag.cli scan   --vehicle "Audi A4 B6 1.8T (2003)"
 python3 -m vagdiag.cli faults --address 01 --clear
 python3 -m vagdiag.cli blocks --address 01 --group 1 --watch
-python3 -m vagdiag.cli coding --address 01 --login 12233 --set 00003
+python3 -m vagdiag.cli coding --address 01 --login 12233 --set 00003 --show-bits
+python3 -m vagdiag.cli map    --address 01 --out kanalmap.csv   # alle Werte in eine Tabelle
 python3 -m vagdiag.cli adapt  --address 01 --read 4
 python3 -m vagdiag.cli actuator --address 01 --sequence     # Stellglieddiagnose
 python3 -m vagdiag.cli actuator --address 01 --basic 4      # Grundeinstellung
@@ -161,7 +163,7 @@ with VehicleSession(vehicle_name="VW Golf IV 1.9 TDI (2001)") as session:
 python3 -m unittest discover -s tests -t .
 ```
 
-138 Tests: KWP1281-Blockcodec samt Dialog, Label-Datei-Parser, Datenbankaufbau
+149 Tests: KWP1281-Blockcodec samt Dialog, Label-Datei-Parser, Datenbankaufbau
 samt Selbstpruefung (inkl. Redir-Ketten, Seed-Pruefung, CSV-Import, absichtlich
 kaputte Seeds), Autoscan-Formatierung, Adress- und Codierungsanzeige, die
 Zusammenfuehrung von Formel- und Label-Einheiten, komplette Diagnosedialoge
@@ -171,7 +173,8 @@ hoert nur den eigenen Dialog mit), die OBD-II-Auswertung und -Sitzung auf
 K-Line und CAN, Stellglieddiagnose und Grundeinstellung auf allen drei
 Transportwegen, die Messwertaufzeichnung samt CSV-Format sowie die
 JSON-Schnittstelle der Oberflaeche (inkl. OBD-II, Stellglieder und Log) und die
-Kommandozeile der neuen Befehle `actuator`, `log` und `obd`.
+Kommandozeile der neuen Befehle `actuator`, `log`, `obd` und `map` sowie die
+Langcodierung auf Bit-Ebene.
 
 ```bash
 python3 -m unittest discover -s tests -t . -v

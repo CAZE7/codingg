@@ -172,6 +172,7 @@
           <select id="groupSelect"></select>
           <label class="muted"><input type="checkbox" id="basicCheck"> Grundeinstellung</label>
           <button class="secondary" id="blockHold">Anhalten</button>
+          <button class="secondary" id="blockMap">Kanalmap (CSV)</button>
           <span class="muted" id="blockInfo"></span>
         </div>
         <div id="blockFields" class="grid2"></div>
@@ -203,6 +204,17 @@
           <span class="muted" id="codingInfo"></span>
         </div>
         <table id="codingTable"></table>
+        <h3 class="muted" style="margin-top:14px">Langcodierung (Bit-Ebene)</h3>
+        <div class="row" style="margin-bottom:8px">
+          <label class="muted">Byte</label>
+          <input type="text" id="codingByte" size="3" value="0">
+          <label class="muted">Bit</label>
+          <input type="text" id="codingBit" size="3" value="0">
+          <button class="secondary" id="codingBitSet">Bit setzen</button>
+          <button class="secondary" id="codingBitClear">Bit löschen</button>
+          <button class="secondary" id="codingBitsShow">Belegung anzeigen</button>
+        </div>
+        <div id="codingBits"></div>
       </div>
 
       <div class="tabbody hidden" id="tab-actuator">
@@ -432,6 +444,7 @@ function renderModule(info) {
   )).join("");
   $("identText").textContent = info.ident.text || "-";
   $("codingValue").value = info.coding.coding ?? "";
+  renderCodingBits(info.bits);
   $("codingTable").innerHTML = (info.coding.options || []).map((option) => (
     `<tr><th>${option.kind === "L" ? "Kanal " + option.block : "Gruppe " + option.block}</th>
      <td>${option.bit !== null && option.bit !== undefined ? "Bit " + option.bit : ""}</td>
@@ -469,6 +482,42 @@ async function saveCoding() {
   } catch (error) {
     setStatus("Codierung: " + error.message, true);
   }
+}
+
+function hexByte(value) {
+  return Number(value).toString(16).toUpperCase().padStart(2, "0");
+}
+
+async function codingBit(on) {
+  if (!ui.address) return;
+  try {
+    const result = await api.post(`/api/coding/${ui.address}`, {
+      byte: Number($("codingByte").value || 0),
+      bit: Number($("codingBit").value || 0),
+      on: on,
+      login: $("loginValue").value || undefined,
+    });
+    $("codingValue").value = result.coding ?? "";
+    setStatus(
+      `Bit ${result.byte}.${result.bit} ${on ? "gesetzt" : "gelöscht"} - ` +
+      `Codierung ${result.coding}`
+    );
+    renderCodingBits(result.bits);
+  } catch (error) {
+    setStatus("Langcodierung: " + error.message, true);
+  }
+}
+
+function renderCodingBits(bits) {
+  const entries = bits || (ui.module && ui.module.bits) || [];
+  if (!entries.length) {
+    $("codingBits").innerHTML = `<div class="muted">Keine gesetzten Bits.</div>`;
+    return;
+  }
+  $("codingBits").innerHTML = `<table>${entries.map((entry) =>
+    `<tr><th style="width:120px">Byte ${entry.byte}, Bit ${entry.bit_in_byte}</th>
+      <td class="muted">Wert ${2 ** entry.bit}</td><td>${entry.text || ""}</td></tr>`
+  ).join("")}</table>`;
 }
 
 async function writeAdaptation(channel) {
@@ -838,6 +887,14 @@ async function main() {
   $("faultRead").addEventListener("click", readFaults);
   $("faultClear").addEventListener("click", clearFaults);
   $("adaptRead").addEventListener("click", readAdaptations);
+  $("codingBitSet").addEventListener("click", () => codingBit(true));
+  $("codingBitClear").addEventListener("click", () => codingBit(false));
+  $("codingBitsShow").addEventListener("click", () => renderCodingBits(ui.module && ui.module.bits));
+  $("blockMap").addEventListener("click", () => {
+    if (!ui.address) return;
+    window.location.href = `/api/map/${ui.address}?format=csv`;
+    setStatus("Kanalmap als CSV-Datei angefordert.");
+  });
   $("codingWrite").addEventListener("click", saveCoding);
   $("blockHold").addEventListener("click", () => {
     ui.holdBlock = !ui.holdBlock;

@@ -511,6 +511,81 @@ class ModuleSession:
             ],
         }
 
+    # -- Langcodierung: Bit-Ebene ------------------------------------------ #
+    @staticmethod
+    def _coding_int(value: str) -> int:
+        """Codierung als Zahl lesen - dezimal bei VAG-Kurzkodierung, sonst hex."""
+        text = "".join((value or "").split())
+        if not text:
+            return 0
+        if text.isdigit():
+            return int(text, 10)
+        return int(text, 16)
+
+    @classmethod
+    def _coding_text(cls, value: int, template: str) -> str:
+        """Zahl zurueck in die Schreibweise des Bestands bringen."""
+        text = "".join((template or "").split())
+        if not text or text.isdigit():
+            return str(value)
+        digits = max(len(text), ((value.bit_length() + 7) // 8) * 2)
+        return f"{value:0{digits}X}"
+
+    def coding_bits(self) -> list[dict]:
+        """Gesetzte Bits der Codierung mit den Texten der Labeldatei.
+
+        VCDS zeigt die Langcodierung byteweise; hier steht jedes Bit mit
+        seinem Byte, seinem Gewicht und - falls die Labeldatei eine
+        Codierhilfe mit passender Bitnummer fuehrt - seinem Text.
+        """
+        current = str(self.coding().get("coding") or "")
+        number = self._coding_int(current)
+        options = (self.label() or {}).get("coding", [])
+        entries: list[dict] = []
+        for index in range(number.bit_length()):
+            if not number >> index & 1:
+                continue
+            byte, bit = divmod(index, 8)
+            text = ""
+            for option in options:
+                if option.get("kind") != "C":
+                    continue
+                option_bit = option.get("bit")
+                if option_bit is not None and divmod(int(option_bit), 8) == (byte, bit):
+                    text = option.get("text") or ""
+                    break
+            entries.append({"bit": index, "byte": byte, "bit_in_byte": bit, "text": text})
+        return entries
+
+    def coding_set_bit(
+        self, byte: int, bit: int, on: bool = True, *, login: int | None = None
+    ) -> dict:
+        """Ein Bit der Codierung setzen oder loeschen (VCDS: Langcodierung).
+
+        Das Byte wird von 0 an gezaehlt, das Bit von 0 (niederwertigstes) bis 7.
+        """
+        byte = int(byte)
+        bit = int(bit)
+        if byte < 0 or not 0 <= bit <= 7:
+            raise DiagnosticError(f"Byte {byte}/Bit {bit} liegt ausserhalb der Codierung")
+        current = str(self.coding().get("coding") or "").strip()
+        if not current:
+            raise DiagnosticError("Codierung nicht lesbar - Bit kann nicht geaendert werden")
+        number = self._coding_int(current)
+        index = byte * 8 + bit
+        if on:
+            number |= 1 << index
+        else:
+            number &= ~(1 << index)
+        if login is not None:
+            self.login(int(login))
+        text = self._coding_text(number, current)
+        result = self.write_coding(text)
+        # "coding" bleibt der Wert, den das Steuergeraet zurueckmeldet;
+        # "sent" zeigt die Schreibweise, die auf den Bus ging.
+        result.update({"byte": byte, "bit": bit, "on": bool(on), "sent": text})
+        return result
+
     def write_coding(self, value: int | str) -> dict:
         text = str(value).strip()
         if self.kline is not None:
@@ -518,7 +593,11 @@ class ModuleSession:
                 int(text), self.session.workshop_code, timeout=self.session.timeout
             )
             self.ident_result = coding
-            return {"ok": True, "coding": coding.coding, "workshop_code": coding.workshop_code}
+            return {
+                "ok": True,
+                "coding": self._padded_coding(str(coding.coding)),
+                "workshop_code": coding.workshop_code,
+            }
         if self.kwp2000 is not None:
             self.kwp2000.set_coding(text)
             return {"ok": True, "coding": text}

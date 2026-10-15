@@ -125,6 +125,25 @@ class WebApiTest(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertTrue(data["geloescht"])
 
+    def test_kanalmap_und_langcodierung(self) -> None:
+        status, data = self.call("GET", "/api/map/01")
+        self.assertEqual(status, 200)
+        self.assertTrue(data["rows"])
+        self.assertEqual(data["rows"][0]["art"], "Messwerteblock")
+
+        status, csv_bytes = self.call("GET", "/api/map/01?format=csv", raw=True)
+        self.assertEqual(status, 200)
+        text = csv_bytes.decode("latin-1")
+        self.assertIn("art;gruppe;feld;text;wert;einheit;bereich", text)
+
+        # Bit setzen und wieder loeschen (Langcodierung)
+        status, data = self.call("POST", "/api/coding/01", {"byte": 0, "bit": 0, "on": True})
+        self.assertEqual(status, 200)
+        self.assertEqual(data["coding"], "00003")
+        self.assertTrue(any(entry["bit"] == 0 for entry in data["bits"]))
+        status, data = self.call("POST", "/api/coding/01", {"byte": 0, "bit": 0, "on": False})
+        self.assertEqual(data["coding"], "00002")
+
     # -- Aufzeichnung ------------------------------------------------------ #
     def test_aufzeichnung_starten_lesen_und_speichern(self) -> None:
         status, data = self.call(
