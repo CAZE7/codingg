@@ -600,10 +600,10 @@ class ModuleSession:
             }
         if self.kwp2000 is not None:
             self.kwp2000.set_coding(text)
-            return {"ok": True, "coding": text}
+            return {"ok": True, "coding": self._padded_coding(text)}
         if self.uds is not None:
             self.uds.set_coding(text.encode("ascii", errors="replace"))
-            return {"ok": True, "coding": text}
+            return {"ok": True, "coding": self._padded_coding(text)}
         raise DiagnosticError("Dieser Transport kann keine Codierung schreiben")
 
     def adaptations(self) -> list[dict]:
