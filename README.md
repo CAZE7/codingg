@@ -88,6 +88,25 @@ vagdiag serve
 Voraussetzungen: Python 3.11 oder neuer, keine externen Abhaengigkeiten
 (ausschliesslich Standardbibliothek).
 
+## Typische Arbeiten wie in VCDS
+
+| VCDS | Hier |
+| --- | --- |
+| Auto-Scan (alle Steuergeraete) | `vagdiag scan` bzw. Knopf **Autoscan** |
+| Steuergeraet waehlen, Kennung lesen | `vagdiag info --address 01`, Reiter **Steuergeraet** |
+| Fehlerspeicher lesen / loeschen | `vagdiag faults --address 01 [--clear]`, Reiter **Fehlerspeicher** |
+| Messwerteblock anzeigen (auch live) | `vagdiag blocks --address 01 --group 1 --watch`, Reiter **Messwerte** |
+| Messwerte mitschreiben (Log/CSV) | Reiter **Log** (Start/Stop, CSV-Download) - `vagdiag log ... --out datei.csv` |
+| Codierung lesen/schreiben | `vagdiag coding --address 01 --login 12233 --set 00003`, Reiter **Codierung** |
+| Langcodierung Bit fuer Bit | `vagdiag coding --set-bit 3.2` / `--clear-bit 3.2` / `--show-bits`, Bit-Editor im Reiter **Codierung** |
+| Anpassung lesen/schreiben | `vagdiag adapt --read 4` / `--set 4=32768`, Reiter **Anpassung** |
+| SRI / Serviceintervall zuruecksetzen | `vagdiag adapt --address 17 --set 2=<Wert>` (Kanal 2 "Servicerueckstellung") |
+| Grundeinstellung (Basic Settings) | `vagdiag actuator --basic 4`, Reiter **Stellglieder** unten |
+| Stellglieddiagnose (Output Test) | `vagdiag actuator --sequence` bzw. `--test 2`, Reiter **Stellglieder** |
+| OBD-II / EOBD | `vagdiag obd --readiness --codes --monitors --freeze --live`, Reiter **OBD-II** |
+| Kanalmap / alles ausgeben | `vagdiag map --address 01 --out kanalmap.csv`, Knopf im Reiter **Messwerte** |
+| Busprotokoll mitlesen | Reiter **Protokoll**, `-v` fuer den Trace auf der Kommandozeile |
+
 ## Aufbau
 
 ```
