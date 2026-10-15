@@ -194,6 +194,20 @@ class UdsSession:
         ) + bytes(value)
         return self.raw(payload)
 
+    def actuator_switch(self, actuator_id: int, on: bool = True) -> bytes:
+        """Stellglied ansteuern/abschalten (Routine ``F0<ID>``).
+
+        Startroutine ``0x01`` schaltet ein, ``0x02`` aus - die Kennung traegt
+        die Stellglied-ID im niederwertigen Byte.
+        """
+        routine = (0xF0 << 8) | (actuator_id & 0xFF)
+        return self.raw(bytes([0x31, 0x01 if on else 0x02, (routine >> 8) & 0xFF, routine & 0xFF]))
+
+    def basic_setting_switch(self, group: int, on: bool = True) -> bytes:
+        """Grundeinstellung ein-/ausschalten (Routine ``FC<Gruppe>``)."""
+        routine = (0xFC << 8) | (group & 0xFF)
+        return self.raw(bytes([0x31, 0x01 if on else 0x02, (routine >> 8) & 0xFF, routine & 0xFF]))
+
     def routine_control(self, routine: int, kind: int = 0x01, data: bytes = b"") -> bytes:
         payload = (
             bytes([0x31, kind, (routine >> 16) & 0xFF, (routine >> 8) & 0xFF, routine & 0xFF])
@@ -276,6 +290,14 @@ class UdsClient:
         return self.session.write_data(
             0xF500 | (channel & 0xFF), value.to_bytes(2, "big")
         )
+
+    def actuator_switch(self, actuator_id: int, on: bool = True) -> bytes:
+        """Stellglied ansteuern/abschalten (Stellglieddiagnose)."""
+        return self.session.actuator_switch(actuator_id, on)
+
+    def basic_setting_switch(self, group: int, on: bool = True) -> bytes:
+        """Grundeinstellung starten/beenden."""
+        return self.session.basic_setting_switch(group, on)
 
     def actuator(self, identifier: int, value: int) -> bytes:
         return self.session.io_control(

@@ -37,7 +37,7 @@ from ..obd import dtc as dtc_mod
 
 __all__ = ["Database", "DatabaseError", "repo_root", "default_db_path"]
 
-SCHEMA_VERSION = "3"
+SCHEMA_VERSION = "4"
 
 #: Labeldateien, die absichtlich nur als Rueckfallebene dienen
 FALLBACK_LABELS = {"generic.lbl"}
@@ -394,6 +394,16 @@ class Database:
                VALUES (?, ?, ?, ?, ?, ?)""",
             [(label_id, c.kind, c.block, c.bit, c.value, c.text) for c in label.coding],
         )
+        connection.execute("DELETE FROM actuator_entry WHERE label_id = ?", (label_id,))
+        connection.executemany(
+            """INSERT OR REPLACE INTO actuator_entry
+               (label_id, actuator_id, step, text, short_text)
+               VALUES (?, ?, ?, ?, ?)""",
+            [
+                (label_id, entry.block, entry.field, entry.text, entry.short_text)
+                for entry in label.actuators
+            ],
+        )
         return label_id
 
     # ------------------------------------------------------------------ #
@@ -465,6 +475,8 @@ class Database:
                 for block in blocks:
                     if not self.block_text(label, block, 0):
                         add("warnung", scope, f"Messwerteblock {block:03d} ohne Titel")
+                if not self.actuator_list(module):
+                    add("warnung", scope, "keine Stellgliedliste (Output Test) hinterlegt")
 
         # --- Labeldateien ----------------------------------------------- #
         for name, row in labels.items():
@@ -478,6 +490,17 @@ class Database:
         ).fetchall():
             if row["target"] not in labels:
                 add("fehler", f"Labeldatei {row['name']}", f"Redir-Ziel {row['target']} fehlt")
+
+        # --- Stellgliedlisten -------------------------------------------- #
+        for row in connection.execute(
+            """SELECT lf.name AS name, ae.* FROM actuator_entry ae
+               JOIN label_file lf ON lf.id = ae.label_id"""
+        ).fetchall():
+            scope = f"{row['name']} Stellglied {int(row['actuator_id']):03d}"
+            if not (row["text"] or row["short_text"]):
+                add("warnung", scope, "ohne Text")
+            if int(row["actuator_id"]) <= 0:
+                add("fehler", scope, "Stellglied-ID muss groesser als 0 sein")
 
         # --- Messwertebloecke und Codierhilfen --------------------------- #
         for row in connection.execute(
@@ -609,6 +632,7 @@ class Database:
             "label_file",
             "measuring_block",
             "coding_entry",
+            "actuator_entry",
             "dtc",
             "adaptation_channel",
         ]
@@ -757,12 +781,18 @@ class Database:
         redirects = connection.execute(
             "SELECT target FROM label_redirect WHERE label_id = ?", (label_id,)
         ).fetchall()
+        actuators = connection.execute(
+            """SELECT actuator_id, step, text, short_text FROM actuator_entry
+               WHERE label_id = ? ORDER BY step, actuator_id""",
+            (label_id,),
+        ).fetchall()
         return {
             "name": row["name"],
             "part_number": row["part_number"],
             "redirects": [r["target"] for r in redirects],
             "measuring": [dict(b) for b in blocks],
             "coding": [dict(c) for c in coding],
+            "actuators": [dict(a) for a in actuators],
         }
 
     def label_for_module(self, module: ModuleInfo) -> dict | None:
@@ -864,6 +894,34 @@ class Database:
             seen.add(row["target"])
             chain.append(row["target"])
         return chain
+
+    def actuator_list(self, module: ModuleInfo | None = None) -> list[dict]:
+        """Stellgliedliste ("Output Test") eines Steuergeraets.
+
+        Die Liste steht in der Label-Datei (``A<ID>,<Schritt>,Text``), inklusive
+        der per ``Redir:`` verketteten Dateien.
+        """
+        if module is None:
+            return []
+        connection = self.connect()
+        collected: list[dict] = []
+        seen: set[int] = set()
+        for name in self._label_chain(module.label_file):
+            rows = connection.execute(
+                """SELECT ae.* FROM actuator_entry ae
+                   JOIN label_file lf ON lf.id = ae.label_id
+                   WHERE lf.name = ? ORDER BY ae.step, ae.actuator_id""",
+                (name,),
+            ).fetchall()
+            for row in rows:
+                entry = dict(row)
+                key = int(entry["actuator_id"])
+                if key in seen:
+                    continue
+                seen.add(key)
+                collected.append(entry)
+        collected.sort(key=lambda entry: (int(entry["step"]), int(entry["actuator_id"])))
+        return collected
 
     def adaptation_channels_for_module(self, module: ModuleInfo) -> list[dict]:
         """Anpassungskanaele eines Steuergeraets (Label-Datei, sonst Adresse)."""

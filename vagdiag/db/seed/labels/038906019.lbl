@@ -25,3 +25,7 @@
 C00,Codierung Motorsteuergerät
 L03,Adaption AGR-Menge
 L04,Adaption Förderbeginn
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kühlerlüfter
+A002,2,AGR-Ventil (N18)

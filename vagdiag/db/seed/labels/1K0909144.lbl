@@ -24,3 +24,7 @@
 
 B001,0,Grundeinstellung Endanschlag (Lenkwinkel)
 C00,Codierung Lenkhilfe
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Lenkhilfe-Warnleuchte
+A002,2,elektrischer Lenkungsmotor (Pulsbetrieb)

@@ -5,7 +5,7 @@
 ;         'B001,F,Text' = Grundeinstellung, ';' = Kommentar, 'Redir:' = Verweis.
 
 :001,0
-001,0,Grundeinstellung (Leerlauf)
+001,0,Leerlauf (Einspritzmenge)
 001,1,Motordrehzahl,0.2*A*B,1/min,780,950
 001,2,Einspritzmenge,?,mg/Hub,3.0,7.0
 001,3,Spannung Modulationskolbenweg,?,V,0.5,4.5
@@ -75,3 +75,13 @@ C01,6,1,Allradantrieb
 L03,Adaption AGR-Menge (Abgasrückführung)
 L04,Adaption Einspritzbeginn (Förderbeginn)
 L05,Adaption Leerlaufdrehzahl
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Glühkerzenrelais
+A002,2,Kühlerlüfter
+A003,3,AGR-Ventil (N18)
+A004,4,Spritzversteller Einspritzpumpe
+A005,5,Einspritzventil N108
+A006,6,Kraftstoffabsperrventil
+A007,7,Klimakompressor-Relais
+A008,8,Kühlmittelnachlaufpumpe

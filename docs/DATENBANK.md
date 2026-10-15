@@ -27,6 +27,7 @@ automatisch angelegt.
 | `label_file` | Label-Dateien mit Teilenummer und Quelle | 14 |
 | `label_redirect` | `Redir:`-Verweise zwischen Label-Dateien | 1 |
 | `measuring_block` | Messwert- und Grundeinstellungseintraege (`basic = 1`) mit Text, Kurztext, Einheit und Grenzwerten | 248 |
+| `actuator_entry` | Stellgliedliste der Labeldatei (`A`-Eintraege) mit Stellglied-ID, Schrittfolge und Text | 56 |
 | `coding_entry` | Codier- und Login-/Anpassungshilfen (`kind = C`/`L`) mit Gruppe, Bit und Wert | 56 |
 | `adaptation_channel` | Anpassungskanaele je Labeldatei oder Adresse mit Text, Bereich und Einheit | 18 |
 | `dtc` | Fehlercodes: VAG-5-stellig (57), SAE/OBD-II (153) mit deutschem Text, Kurztext, System und Hinweis | 210 |
@@ -66,6 +67,7 @@ Redir: 038906019.lbl          ; Verweis auf eine weitere Datei
 001,0,Grundeinstellung        ; Blocktitel (Feld 0)
 001,1,Motordrehzahl,0.2*A*B,1/min,780,950
 B001,1,Grundeinstellung Leerlauf
+A001,1,Gluehkerzenrelais        ; Stellglieddiagnose: ID 1, Schritt 1
 C01,1,1,2,Schaltgetriebe      ; Codierhilfe: Gruppe 1, Bit 1, Wert 2
 L03,Adaption AGR-Menge        ; Kanal 3 (ohne Wert = nur Beschreibung)
 ```
@@ -81,6 +83,13 @@ Fuer Messwerte gilt die erweiterte Spaltenfolge
   `mbar` gegen `bar`), gilt die Formel - die abweichende Angabe erscheint als
   Hinweis (Spalte `unit_hint` der Weboberflaeche bzw. `(Label: ...)` in der
   Kommandozeile).
+* `A<ID>,<Schritt>,Text` beschreibt die Stellglieddiagnose. Die Reihenfolge
+  ergibt sich aus der Schrittspalte; `vagdiag actuator --sequence` fahert sie
+  der Reihe nach ab, `1`-Eintraege ohne Reihenfolge stehen am Ende.
+* `B<Block>,<Feld>,Text` beschreibt die Grundeinstellung. Die Anzeige liest
+  denselben Block wie im Normalbetrieb, nur mit Blocktitel `0x28` bzw. der
+  Routine `FC<Block>` - die Werte stammen damit aus der laufenden
+  Grundstellung (Foerderbeginn, Partikelfilter-Regeneration, ...).
 * `Redir:`-Ketten loest die Datenbank beim Lesen auf
   (`Database.label_for_module`), sodass Ergaenzungen einer Variante die
   Basiseintraege nicht verdecken.
@@ -131,6 +140,8 @@ Bestand mit dem, was die Diagnose erwartet. Geprueft wird unter anderem:
 | Codier- und Anpassungshilfen: Art gueltig, Wert im Bereich, Bereich nicht leer | Fehler |
 | Fehlercode: Text vorhanden, Art gueltig, VAG-Code 1..65535, SAE-Code im Format `P/C/B/U####` | Fehler |
 | Messwertbereich (`min` < `max`) | Fehler |
+| Stellglied-ID groesser 0, Text vorhanden, Schrittzahl nicht doppelt | Fehler |
+| Steuergeraet mit Messwerten, aber ohne Stellgliedliste | Warnung |
 | Codierung eines Steuergeraets vorhanden, numerisch und ungleich 0 | Warnung |
 | Messwerteblock ohne Titel, Labeldatei von keinem Fahrzeug verwendet | Warnung |
 | Anpassungskanal ohne Beschreibung oder Wertebereich | Warnung |
@@ -154,6 +165,7 @@ database.block_numbers(module)                     # Messwertebloecke
 database.block_text(label, 1, 1)                   # Feldtext aus der Labeldatei
 database.adaptation_channels(module)               # Anpassungskanaele
 database.label_for_module(module)                  # Labeldatei inkl. Redir
+database.actuator_list(module)                     # Stellgliedliste der Labeldatei
 database.dtc_lookup("P0420")
 database.stats()
 database.check()                                   # Befunde der Selbstpruefung

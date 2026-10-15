@@ -147,6 +147,9 @@
         <button data-tab="faults">Fehlerspeicher</button>
         <button data-tab="adapt">Anpassung</button>
         <button data-tab="coding">Codierung</button>
+        <button data-tab="actuator">Stellglieder</button>
+        <button data-tab="obd">OBD-II</button>
+        <button data-tab="log">Log</button>
         <button data-tab="trace">Protokoll</button>
       </div>
 
@@ -200,6 +203,68 @@
           <span class="muted" id="codingInfo"></span>
         </div>
         <table id="codingTable"></table>
+      </div>
+
+      <div class="tabbody hidden" id="tab-actuator">
+        <div class="row" style="margin-bottom:10px">
+          <button class="secondary" id="actuatorRead">Liste laden</button>
+          <button class="danger" id="actuatorRelease">Alle abschalten</button>
+          <span class="muted" id="actuatorInfo"></span>
+        </div>
+        <div id="actuatorList"></div>
+        <h3 class="muted" style="margin-top:14px">Grundeinstellung</h3>
+        <div class="row" style="margin-bottom:8px">
+          <span class="muted">VCDS: Grundeinstellung starten, Werte beobachten, beenden.</span>
+        </div>
+        <div id="basicList"></div>
+        <div id="basicFields" class="grid2" style="margin-top:10px"></div>
+      </div>
+
+      <div class="tabbody hidden" id="tab-obd">
+        <div class="row" style="margin-bottom:10px">
+          <button class="secondary" id="obdRead">OBD-II lesen</button>
+          <button class="secondary" id="obdFreeze">Freeze Frame</button>
+          <button class="secondary" id="obdMonitors">Bordüberwachung</button>
+          <button class="danger" id="obdClear">Fehlerspeicher löschen</button>
+          <span class="muted" id="obdInfo"></span>
+        </div>
+        <div class="grid2">
+          <div>
+            <h3 class="muted">Fahrzeugdaten (Modus 09)</h3>
+            <table id="obdVehicle"></table>
+            <h3 class="muted" style="margin-top:12px">Bereitschaft (PID 01)</h3>
+            <div id="obdReadiness"></div>
+          </div>
+          <div>
+            <h3 class="muted">Live-Messwerte (Modus 01)</h3>
+            <table id="obdLive"></table>
+          </div>
+        </div>
+        <h3 class="muted" style="margin-top:12px">Fehlerspeicher</h3>
+        <div id="obdFaults"></div>
+        <div id="obdExtra"></div>
+      </div>
+
+      <div class="tabbody hidden" id="tab-log">
+        <div class="row" style="margin-bottom:10px">
+          <label class="muted">Blöcke</label>
+          <input type="text" id="logBlocks" size="12" value="1">
+          <label class="muted">Intervall (s)</label>
+          <input type="text" id="logInterval" size="5" value="0.5">
+          <label class="muted">Dauer (s)</label>
+          <input type="text" id="logDuration" size="5" value="0">
+          <label class="muted"><input type="checkbox" id="logBasic"> Grundeinstellung</label>
+          <button id="logStart">Aufzeichnung starten</button>
+          <button class="secondary" id="logStop">Beenden</button>
+          <a class="row muted" id="logDownload" href="/api/log.csv" download="messwerte.csv"
+             style="text-decoration:underline">CSV herunterladen</a>
+        </div>
+        <div class="row" style="margin-bottom:8px">
+          <button class="secondary" id="logRefresh">Aktualisieren</button>
+          <label class="muted"><input type="checkbox" id="logAuto"> automatisch</label>
+          <span class="muted" id="logInfo"></span>
+        </div>
+        <div id="logTable"></div>
       </div>
 
       <div class="tabbody hidden" id="tab-trace">
@@ -257,6 +322,10 @@ const ui = {
   lastBlock: null,
   holdBlock: false,
   traceAuto: false,
+  logAuto: false,
+  actuator: null,
+  obd: null,
+  basic: null,
 };
 
 const $ = (id) => document.getElementById(id);
@@ -523,6 +592,210 @@ async function runScan() {
   }
 }
 
+/* ------------------------------------------------------------- Stellglieder */
+async function loadActuators() {
+  if (!ui.address) return;
+  try {
+    const data = await api.get(`/api/actuator/${ui.address}`);
+    ui.actuator = data;
+    const rows = (data.actuators || []).map((entry) => {
+      const active = entry.active ? `<span class="badge faults">angesteuert</span>` : "";
+      return `<tr>
+        <th style="width:60px">${String(entry.id).padStart(2, "0")}</th>
+        <td>${entry.text || ""} ${active}</td>
+        <td style="width:150px">
+          <button class="secondary" data-actuator="${entry.id}">Testen</button>
+          <button class="secondary" data-actuator-off="${entry.id}">Aus</button>
+        </td></tr>`;
+    }).join("");
+    $("actuatorList").innerHTML = rows
+      ? `<table>${rows}</table>`
+      : `<div class="muted">Für dieses Steuergerät ist keine Stellgliedliste hinterlegt.</div>`;
+    $("actuatorInfo").textContent =
+      `${(data.actuators || []).length} Stellglieder`;
+    document.querySelectorAll("button[data-actuator]").forEach((button) => {
+      button.addEventListener("click", () => testActuator(Number(button.dataset.actuator)));
+    });
+    document.querySelectorAll("button[data-actuator-off]").forEach((button) => {
+      button.addEventListener("click", () => testActuator(0));
+    });
+    const basics = (data.basic || []).map((entry) => {
+      const active = entry.group === data.basic_active;
+      return `<tr>
+        <th style="width:70px">Block ${String(entry.group).padStart(3, "0")}</th>
+        <td>${entry.text || "Grundeinstellung"}</td>
+        <td style="width:170px">
+          <button ${active ? "disabled" : ""} data-basic="${entry.group}">Starten</button>
+          <button class="secondary" ${active ? "" : "disabled"} data-basic-off="${entry.group}">Beenden</button>
+        </td></tr>`;
+    }).join("");
+    $("basicList").innerHTML = basics
+      ? `<table>${basics}</table>`
+      : `<div class="muted">Keine Grundeinstellungsblöcke hinterlegt.</div>`;
+    document.querySelectorAll("button[data-basic]").forEach((button) => {
+      button.addEventListener("click", () => basicSetting(Number(button.dataset.basic), true));
+    });
+    document.querySelectorAll("button[data-basic-off]").forEach((button) => {
+      button.addEventListener("click", () => basicSetting(Number(button.dataset.basicOff), false));
+    });
+  } catch (error) {
+    setStatus("Stellglieddiagnose: " + error.message, true);
+  }
+}
+
+async function testActuator(id) {
+  if (!ui.address) return;
+  try {
+    const result = await api.post(`/api/actuator/${ui.address}`, { actuator: id });
+    setStatus(result.actuator
+      ? `Stellglied ${String(result.actuator).padStart(2, "0")}: ${result.text || "unbekannt"} ${result.response || ""}`
+      : `Alle Stellglieder abgeschaltet.`);
+    loadActuators();
+  } catch (error) {
+    setStatus("Stellglied: " + error.message, true);
+  }
+}
+
+async function basicSetting(group, on) {
+  if (!ui.address) return;
+  try {
+    const result = await api.post(`/api/actuator/${ui.address}`, { basic: group, on: on });
+    setStatus(on
+      ? `Grundeinstellung Block ${String(group).padStart(3, "0")} gestartet: ${result.text || ""}`
+      : `Grundeinstellung Block ${String(group).padStart(3, "0")} beendet.`);
+    if (result.block) renderBlock(result.block);
+  } catch (error) {
+    setStatus("Grundeinstellung: " + error.message, true);
+  }
+  loadActuators();
+}
+
+/* -------------------------------------------------------------------- OBD-II */
+async function loadObd(service) {
+  try {
+    const data = service === "clear"
+      ? await api.post("/api/obd", { dienst: "clear" })
+      : await api.post("/api/obd", { dienst: "info" });
+    if (data.transport === undefined) {  // Antwort auf das Loeschen
+      setStatus("OBD-II: Fehlerspeicher gelöscht.");
+      return;
+    }
+    ui.obd = data;
+    $("obdInfo").textContent = data.transport || "";
+    const info = data.vehicle_info || {};
+    $("obdVehicle").innerHTML = [
+      ["Fahrgestellnummer", info.vin],
+      ["Steuergerät", info.ecu_name],
+      ["Softwarestand", info.calibration_id],
+      ["Prüfsumme (CVN)", info.cvn],
+      ["Unterstützte PIDs", (data.supported_pids || []).slice(0, 12).join(", ")],
+    ].map(([k, v]) => `<tr><th style="width:38%">${k}</th><td>${v || "-"}</td></tr>`).join("");
+    const readiness = data.readiness || {};
+    $("obdReadiness").innerHTML = `
+      <div class="item"><div class="k">MIL</div><div class="v">${readiness.mil ? "an" : "aus"}</div></div>
+      <div class="item"><div class="k">Fehlercodes</div><div class="v">${readiness.dtc_count ?? "-"}</div></div>
+      <div class="item"><div class="k">Motorart</div><div class="v">${readiness.compression ? "Diesel" : "Benziner"}</div></div>
+      <div class="muted">Offen: ${(readiness.incomplete || []).join(", ") || "keine"}</div>
+      <div class="muted">Abgeschlossen: ${(readiness.complete || []).join(", ") || "-"}</div>`;
+    $("obdLive").innerHTML = (data.live || []).map((entry) => (
+      `<tr><th style="width:60px">${entry.pid}</th><td>${entry.name}</td>
+        <td style="text-align:right">${entry.value}${entry.unit ? " " + entry.unit : ""}</td></tr>`
+    )).join("") || `<tr><td class="muted">Keine Live-Werte.</td></tr>`;
+    const faultRows = [];
+    for (const [title, list] of [["Fehlerspeicher (Modus 03)", data.codes],
+                                 ["schwebend (Modus 07)", data.pending],
+                                 ["dauerhaft (Modus 0A)", data.permanent]]) {
+      for (const entry of list || []) {
+        faultRows.push(`<div class="fault"><span class="code">${entry.code}</span>
+          <span class="muted">${title}</span><div>${entry.text || "unbekannter Code"}</div></div>`);
+      }
+    }
+    $("obdFaults").innerHTML = faultRows.join("") ||
+      `<div class="badge none">Keine OBD-Fehler gespeichert</div>`;
+    const extras = [];
+    if (data.freeze_frame && data.freeze_frame.length) {
+      extras.push(`<h3 class="muted" style="margin-top:12px">Freeze Frame (Modus 02)</h3>` +
+        `<table>${data.freeze_frame.map((entry) =>
+          `<tr><th style="width:70px">${entry.pid}</th><td>${entry.name}</td>
+            <td style="text-align:right">${entry.value}${entry.unit ? " " + entry.unit : ""}</td></tr>`).join("")}</table>`);
+    }
+    if (data.monitors && data.monitors.length) {
+      extras.push(`<h3 class="muted" style="margin-top:12px">Bordüberwachung (Modus 06)</h3>` +
+        `<table>${data.monitors.map((entry) =>
+          `<tr><th style="width:70px">${entry.mid}</th><td>${entry.name}</td>
+            <td style="text-align:right">${entry.value} (erlaubt ${entry.min}-${entry.max})</td>
+            <td style="width:80px">${entry.ok ? "ok" : "außerhalb"}</td></tr>`).join("")}</table>`);
+    }
+    if (data.vag_codes && data.vag_codes.length) {
+      extras.push(`<h3 class="muted" style="margin-top:12px">VAG-Codes ohne OBD-Schreibweise</h3>` +
+        `<div>${data.vag_codes.map((entry) =>
+          `<div class="fault"><span class="code">${entry.code}</span>
+            <span class="muted">${entry.status || ""}</span><div>${entry.text || ""}</div></div>`).join("")}</div>`);
+    }
+    $("obdExtra").innerHTML = extras.join("");
+    setStatus(`OBD-II gelesen (${data.transport}).`);
+  } catch (error) {
+    setStatus("OBD-II: " + error.message, true);
+  }
+}
+
+/* ----------------------------------------------------------------------- Log */
+async function startLog() {
+  if (!ui.address) return;
+  try {
+    const data = await api.post("/api/log/start", {
+      address: ui.address,
+      blocks: $("logBlocks").value || "1",
+      interval: Number($("logInterval").value || 0.5),
+      duration: Number($("logDuration").value || 0),
+      basic: $("logBasic").checked,
+    });
+    $("logInfo").textContent = `läuft - ${(data.spalten || []).length} Spalten`;
+    setStatus("Aufzeichnung gestartet.");
+    loadLog();
+  } catch (error) {
+    setStatus("Aufzeichnung: " + error.message, true);
+  }
+}
+
+async function stopLog() {
+  try {
+    const data = await api.post("/api/log/stop", {});
+    setStatus(`Aufzeichnung beendet (${data.gesamt ?? 0} Zeilen).`);
+    loadLog();
+  } catch (error) {
+    setStatus("Aufzeichnung: " + error.message, true);
+  }
+}
+
+async function loadLog() {
+  try {
+    const data = await api.get("/api/log");
+    if (!data.laufend && !(data.gesamt || 0)) {
+      $("logInfo").textContent = "keine Aufzeichnung";
+      $("logTable").innerHTML = `<div class="muted">Noch keine Aufzeichnung gestartet.</div>`;
+      return;
+    }
+    $("logInfo").textContent =
+      `${data.laufend ? "läuft" : "beendet"} - ${data.gesamt || 0} Zeilen, ` +
+      `${(data.spalten || []).length} Spalten` + (data.fehler && data.fehler.length
+        ? ` (${data.fehler.length} Hinweise)` : "");
+    if (!(data.zeilen || []).length) {
+      $("logTable").innerHTML = `<div class="muted">Noch keine Zeile geschrieben.</div>`;
+      return;
+    }
+    const head = ["Zeit", "Sekunden"].concat(data.spalten || []);
+    const rows = data.zeilen.slice(-40).map((row) =>
+      `<tr>${head.map((name) =>
+        `<td>${row[name] ?? ""}</td>`).join("")}</tr>`).join("");
+    $("logTable").innerHTML =
+      `<div style="overflow:auto;max-height:340px"><table><thead><tr>${
+        head.map((name) => `<th>${name}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table></div>`;
+  } catch (error) {
+    setStatus("Aufzeichnung: " + error.message, true);
+  }
+}
+
 /* -------------------------------------------------------------------- Protokoll */
 async function loadTrace() {
   const entries = await api.get("/api/trace?count=120");
@@ -541,11 +814,15 @@ function bindTabs() {
     button.addEventListener("click", () => {
       document.querySelectorAll("#tabs button").forEach((b) => b.classList.remove("active"));
       button.classList.add("active");
-      ["ident", "blocks", "faults", "adapt", "coding", "trace"].forEach((tab) => {
-        $(`tab-${tab}`).classList.toggle("hidden", tab !== button.dataset.tab);
-      });
+      ["ident", "blocks", "faults", "adapt", "coding", "actuator", "obd", "log", "trace"]
+        .forEach((tab) => {
+          $(`tab-${tab}`).classList.toggle("hidden", tab !== button.dataset.tab);
+        });
       if (button.dataset.tab === "blocks") pollBlock();
       if (button.dataset.tab === "faults") readFaults();
+      if (button.dataset.tab === "actuator") loadActuators();
+      if (button.dataset.tab === "obd") loadObd();
+      if (button.dataset.tab === "log") loadLog();
       if (button.dataset.tab === "trace") loadTrace();
     });
   });
@@ -568,6 +845,19 @@ async function main() {
   });
   $("groupSelect").addEventListener("change", pollBlock);
   $("basicCheck").addEventListener("change", pollBlock);
+  $("actuatorRead").addEventListener("click", loadActuators);
+  $("actuatorRelease").addEventListener("click", () => testActuator(0));
+  $("obdRead").addEventListener("click", () => loadObd());
+  $("obdClear").addEventListener("click", () => loadObd("clear"));
+  $("obdFreeze").addEventListener("click", () => loadObd());
+  $("obdMonitors").addEventListener("click", () => loadObd());
+  $("logStart").addEventListener("click", startLog);
+  $("logStop").addEventListener("click", stopLog);
+  $("logRefresh").addEventListener("click", loadLog);
+  $("logAuto").addEventListener("change", (event) => {
+    ui.logAuto = event.target.checked;
+    if (ui.logAuto) loadLog();
+  });
   $("traceRefresh").addEventListener("click", loadTrace);
   $("traceAuto").addEventListener("change", (event) => {
     ui.traceAuto = event.target.checked;
@@ -614,9 +904,9 @@ async function main() {
         `<div class="item"><div class="k">${k}</div><div class="v">${v}</div></div>`
       )).join("");
       $("conn").textContent = state.started ? "verbunden" : "gestoppt";
-      if (document.querySelector("#tabs button.active").dataset.tab === "blocks") {
-        pollBlock();
-      }
+      const activeTab = document.querySelector("#tabs button.active").dataset.tab;
+      if (activeTab === "blocks") pollBlock();
+      if (activeTab === "log" && ui.logAuto) loadLog();
       if (ui.traceAuto) loadTrace();
     } catch (error) {
       $("conn").textContent = "offline";

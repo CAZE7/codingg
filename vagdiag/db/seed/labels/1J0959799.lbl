@@ -37,3 +37,10 @@ C01,4,8,Alarmanlage mit Innenraumüberwachung
 L03,Adaption Automatisches Verriegeln ab 15 km/h
 L04,Adaption Akustische Quittierung beim Schließen
 L05,Adaption Komfortschließen über Funk
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Innenraumbeleuchtung
+A002,2,Zentralverriegelung (Ver-/Entriegeln)
+A003,3,Kofferraum-/Heckklappenentriegelung
+A004,4,Wisch-Wasch-Anlage
+A005,5,Hupe

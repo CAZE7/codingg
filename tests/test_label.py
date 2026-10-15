@@ -73,7 +73,7 @@ class SeedLabelFileTest(unittest.TestCase):
         self.assertTrue(SEED_LABEL.exists(), "Seed-Labeldatei fehlt")
         label = parse_label_file(SEED_LABEL)
         self.assertEqual(label.name, "038906018G.lbl")
-        self.assertEqual(label.block_text(1), "Grundeinstellung (Leerlauf)")
+        self.assertEqual(label.block_text(1), "Leerlauf (Einspritzmenge)")
         drehzahl = label.field_text(1, 1)
         self.assertEqual(drehzahl.unit, "1/min")
         self.assertEqual((drehzahl.min_value, drehzahl.max_value), (780.0, 950.0))

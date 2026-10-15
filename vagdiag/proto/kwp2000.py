@@ -203,6 +203,21 @@ class DiagnosticSession:
     def output_control(self, local_id: int, value: int) -> bytes:
         return self.raw(bytes([0x30, local_id & 0xFF, 0x03, value & 0xFF]))
 
+    def actuator_switch(self, actuator_id: int, on: bool = True) -> bytes:
+        """Stellglied ansteuern/abschalten (InputOutputControlByLocalIdentifier).
+
+        Steuerparameter ``0x01`` = ansteuern, ``0x00`` = abschalten; die
+        Stellglied-ID wird als LocalIdentifier und als Wert gefuehrt.
+        """
+        actuator_id &= 0xFF
+        if on:
+            return self.raw(bytes([0x30, actuator_id, 0x01, actuator_id]))
+        return self.raw(bytes([0x30, actuator_id, 0x00, 0x00]))
+
+    def basic_setting_switch(self, group: int, on: bool = True) -> bytes:
+        """Grundeinstellung ein-/ausschalten (Routine ``FC<Gruppe>``)."""
+        return self.raw(bytes([0x31, 0x01 if on else 0x02, 0xFC, group & 0xFF]))
+
     def login(self, key: int) -> bytes:
         return self.raw(bytes([0x27, 0x01, (key >> 8) & 0xFF, key & 0xFF]))
 
@@ -286,6 +301,14 @@ class Kwp2000Client:
 
     def measuring_block(self, group: int):
         return self.session.read_measuring_block(group)
+
+    def actuator_switch(self, actuator_id: int, on: bool = True) -> bytes:
+        """Stellglied ansteuern/abschalten (Stellglieddiagnose)."""
+        return self.session.actuator_switch(actuator_id, on)
+
+    def basic_setting_switch(self, group: int, on: bool = True) -> bytes:
+        """Grundeinstellung starten/beenden."""
+        return self.session.basic_setting_switch(group, on)
 
     def coding(self) -> str:
         return self.session.read_coding().decode("latin-1", errors="replace")

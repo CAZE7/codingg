@@ -39,3 +39,13 @@
 B004,0,Grundeinstellung Partikelfilter-Regeneration
 C00,Codierung Motorsteuergerät
 L01,Adaption Leerlaufdrehzahl
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kühlerlüfter (Lüfteransteuerung)
+A002,2,AGR-Ventil (Abgasrückführung)
+A003,3,Vorglührelais / Glühkerzen
+A004,4,Einspritzventile Zylinder 1-4 (Pumpe-Düse)
+A005,5,Ladedruckregelventil (VTG)
+A006,6,Abgasklappe
+A007,7,Abschaltventil Kraftstoffpumpe
+A008,8,Klimakompressor-Abschaltung

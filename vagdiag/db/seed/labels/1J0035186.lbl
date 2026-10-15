@@ -19,3 +19,7 @@ C00,Codierung Radio
 C01,1,1,Soundsystem
 C01,2,2,Navigation
 C01,4,4,Telefon-Stummschaltung
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kofferraumbeleuchtung
+A002,2,Heckklappenverriegelung

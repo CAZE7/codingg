@@ -23,6 +23,7 @@ from enum import IntEnum
 from typing import Callable, Iterable, Sequence
 
 from .bus import KLineBus, KLineEcu, KLineNode
+from .iso14230 import Iso14230Frame
 
 __all__ = [
     "BlockTitle",
@@ -658,6 +659,50 @@ class Kwp1281EcuServer(KLineEcu):
                 if not self._wakeup.is_set():
                     self.listening = False
 
+    # -- ISO 14230 (OBD-II auf der K-Line) ------------------------------------ #
+    def _read_request(self, *, timeout: float) -> tuple[str, object]:
+        """Liest entweder einen KWP1281-Block oder einen ISO-14230-Rahmen.
+
+        Das erste Byte entscheidet: Bit 7 gesetzt kennzeichnet den
+        ISO-14230-Rahmenanfang (``FMT``), sonst beginnt ein Block mit seiner
+        Laenge. So bedient ein Steuergeraet beide Dialoge in derselben Sitzung -
+        wie am echten Fahrzeug, wo dieselbe Leitung beides traegt.
+        """
+        first = self._read_byte_acked(timeout)
+        if first & 0x80:
+            length = first & 0x3F
+            rest = bytes(self._read_byte_acked(timeout) for _ in range(length))
+            frame = Iso14230Frame.from_bytes(first, rest)
+            self.transcript.append(f"T {bytes([first]).hex(' ')} {rest.hex(' ')}")
+            return "iso14230", frame
+        raw = bytearray([first])
+        if first < 3:
+            raise Kwp1281Error(f"Ungueltige Blocklaenge {first}")
+        for _ in range(first):
+            raw.append(self._read_byte_acked(timeout))
+        block = Block.from_bytes(bytes(raw))
+        if self.counter is not None and block.counter != self.counter:
+            self.log(f"KWP1281: Blockzaehler {block.counter:02X} statt {self.counter:02X}")
+        self.counter = (block.counter + 1) & 0xFF
+        self.transcript.append(f"T {raw.hex(' ')}")
+        return "block", block
+
+    def _handle_iso14230(self, frame: Iso14230Frame) -> None:
+        """Beantwortet einen OBD-II-Dienst (Modi 01-0A) aus dem Modul."""
+        if frame.target not in (self.address, 0x00):
+            return
+        response = self.module.handle_obd(frame.data)
+        if response is None:
+            return
+        answer = Iso14230Frame(
+            target=frame.source, source=self.address, data=bytes(response)
+        ).to_bytes()
+        for byte in answer:
+            self.send_bytes(bytes([byte]))
+            self._expect_tester_ack(byte)
+            self.bus.clock.r6()
+        self.transcript.append(f"E {answer.hex(' ')}")
+
     def _session(self) -> None:
         # Steuergeraet meldet sich nach dem Keyword-Austausch selbst mit Identbloecken
         items: list[tuple[int, bytes]] = [
@@ -688,13 +733,21 @@ class Kwp1281EcuServer(KLineEcu):
         idle_timeout = 30.0
         deadline = time.monotonic() + idle_timeout
         while self._running:
+            if self._wakeup.is_set():
+                # Ein neuer Tester adressiert das Steuergeraet: der laufende
+                # Dialog endet, der neue beginnt mit den Identbloecken.
+                return
             try:
-                request = self.read_block(timeout=0.25)
+                kind, payload = self._read_request(timeout=0.25)
             except TimeoutError:
                 if not self._running or time.monotonic() >= deadline:
                     return
                 continue
             deadline = time.monotonic() + idle_timeout
+            if kind == "iso14230":
+                self._handle_iso14230(payload)
+                continue
+            request = payload
             if request.title == BlockTitle.END:
                 self.log("KWP1281: Dialog beendet (0x06)")
                 return
@@ -739,9 +792,14 @@ class Kwp1281EcuServer(KLineEcu):
             if not body:
                 self.write_block(BlockTitle.NAK)
                 return
-            reading = self.module.group_read(
-                body[0], basic_setting=title == BlockTitle.BASIC_SETTING_READ
-            )
+            basic = title == BlockTitle.BASIC_SETTING_READ
+            reading = self.module.group_read(body[0], basic_setting=basic)
+            # Der Blocktitel schaltet den Grundstellungsmodus um (0x28 an,
+            # 0x29 aus) - so verhaelt sich das echte Steuergeraet. Ein
+            # Steuergeraet ohne diese Zusatzangabe bleibt unveraendert.
+            marker = getattr(self.module, "begin_basic_setting", None)
+            if marker is not None:
+                marker(body[0], basic)
             if reading is None:
                 self.write_block(BlockTitle.NAK)
                 return

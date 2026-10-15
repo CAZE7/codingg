@@ -122,6 +122,11 @@ class IsoTpEndpoint(CanNode):
         self._fc_st_min = 0.0
         self._send_lock = threading.Lock()
         self.stats = {"frames_tx": 0, "frames_rx": 0, "timeouts": 0, "n_cr": 0}
+        # Steuergeraeteseite: Auftraege laufen in einem eigenen Thread, damit
+        # das Senden einer mehrteiligen Antwort nicht den Empfang blockiert
+        # (der Tester schickt waehrenddessen seine Flow-Control-Rahmen).
+        self._requests: "queue.Queue[bytes | None]" = queue.Queue()
+        self._reply_thread: threading.Thread | None = None
 
     # -- Busanbindung -------------------------------------------------------- #
     def accept_ids(self):
@@ -235,11 +240,40 @@ class IsoTpEndpoint(CanNode):
             self._fc_st_min = stmin_seconds(value & 0xFF)
             self._fc_event.set()
 
+    # -- Lebenszyklus (Steuergeraeteseite) ------------------------------------ #
+    def start(self) -> None:
+        super().start()
+        if self.handler is not None and self._reply_thread is None:
+            self._reply_thread = threading.Thread(
+                target=self._reply_loop, name=f"isotp-tx-{self.name}", daemon=True
+            )
+            self._reply_thread.start()
+
+    def stop(self, timeout: float = 1.0) -> None:
+        if self._reply_thread is not None:
+            self._requests.put(None)
+            self._reply_thread.join(timeout=timeout)
+            self._reply_thread = None
+        super().stop(timeout)
+
+    def _reply_loop(self) -> None:
+        while self._running or not self._requests.empty():
+            try:
+                payload = self._requests.get(timeout=0.1)
+            except queue.Empty:
+                continue
+            if payload is None:
+                break
+            reply = self.handler(payload) if self.handler else None
+            if reply:
+                try:
+                    self.send_payload(reply)
+                except IsoTpError as exc:  # pragma: no cover - Simulation
+                    self.bus.trace_event(self.name, f"ISO-TP: Antwort nicht gesendet ({exc})")
+
     def _handle_payload(self, payload: bytes) -> None:
         if self.handler is not None:
-            reply = self.handler(payload)
-            if reply:
-                self.send_payload(reply)
+            self._requests.put(bytes(payload))
         else:
             self._responses.put(payload)
 

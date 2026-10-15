@@ -43,3 +43,9 @@ C01,1,1,ABS
 C01,2,2,ABS mit ASR
 C01,3,3,ESP
 L01,Adaption Reifenumfang
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,ABS-Warnleuchte
+A002,2,ABS-Rückförderpumpe (Relais)
+A003,3,Warnsummer / Bremsenwarnleuchte
+A004,4,Lenkwinkelsensor abgleichen

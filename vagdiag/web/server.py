@@ -14,6 +14,14 @@ JSON-Schnittstelle:
 ``GET  /api/blocks/<addr>``      Messwerteblock (``?group=1&basic=0``)
 ``POST /api/coding/<addr>``      Codierung schreiben (``{"value": "...", "login": "..."}``)
 ``POST /api/adapt/<addr>``       Anpassung lesen/schreiben (``{"channel": 4, "value": 33000}``)
+``GET  /api/actuator/<addr>``    Stellgliedliste und Grundeinstellungsbloecke
+``POST /api/actuator/<addr>``    Stellglied ansteuern / Grundeinstellung schalten
+``GET  /api/obd``                OBD-II-Uebersicht (Transport, Bereitschaft, Fehler, Info)
+``POST /api/obd``                OBD-II-Dienst ausfuehren (``{"dienst": "loeschen"|"monitore"}``)
+``POST /api/log/start``          Messwerte mitschreiben (``{"address": 1, "blocks": "1,4"}``)
+``GET  /api/log``                Stand der Aufzeichnung (Zeilen, Spalten, Fehler)
+``POST /api/log/stop``           Aufzeichnung beenden
+``GET  /api/log.csv``            Aufzeichnung als CSV-Datei herunterladen
 ``GET  /api/trace``              Busprotokoll der Simulation
 ===============================  ==========================================================
 """
@@ -32,7 +40,9 @@ from urllib.parse import parse_qs, unquote, urlparse
 from .. import APP_NAME, APP_SUBTITLE, __version__, address_text
 from ..client import DiagnosticError, VehicleSession
 from ..db import Database
+from ..log import LogRecorder, row_from_block
 from ..obd.scan import format_autoscan
+from ..obd.session import ObdSession
 from ..proto.isotp import IsoTpError
 from ..proto.kw1281 import Kwp1281Error
 from ..proto.kwp2000 import Kwp2000Error
@@ -70,10 +80,14 @@ class _AppState:
         self.session.start()
         self.last_scan: dict | None = None
         self._last_report: str = ""
+        #: Aufzeichnung (VCDS: Log) - laeuft optional im Hintergrund
+        self.recorder: LogRecorder | None = None
+        self.record_error: str = ""
 
     # -- Fahrzeug ---------------------------------------------------------- #
     def switch_vehicle(self, name: str) -> dict:
         with self.lock:
+            self.stop_log()
             self.session.stop()
             self.session = VehicleSession(
                 db=self.db, vehicle_name=name, speed=self.speed, drive=True, log=self.log
@@ -143,6 +157,9 @@ class _AppState:
         einmal wiederholt, bevor ein Fehler an die Oberflaeche geht. Nach der
         Anfrage wird der Dialog geschlossen, damit kein Kanal am Bus bleibt.
         """
+        # Die Sperre gilt fuer den gesamten Dialog: ein Tester kann immer nur
+        # mit einem Steuergeraet sprechen. Ohne sie wuerden sich zwei
+        # gleichzeitige Anfragen die Kanaele am Bus gegenseitig wegnehmen.
         with self.lock:
             if self.session.module(address) is None:
                 # Nicht verbaute Adressen werden nicht wiederholt - der
@@ -154,12 +171,89 @@ class _AppState:
                 self.session.close_module(address)
                 self.log(f"Dialog {address_text(address)} neu aufbauen ({exc})")
                 module = self.session.open_module(address)
-        try:
-            yield module
-        finally:
-            # Jede Anfrage schliesst ihren Dialog: sonst sammeln sich alte
-            # Kanaele am Bus an, die fremde Dialoge mitlesen und quittieren.
-            self.session.close_module(address)
+            try:
+                yield module
+            finally:
+                # Jede Anfrage schliesst ihren Dialog: sonst sammeln sich alte
+                # Kanaele am Bus an, die fremde Dialoge mitlesen und quittieren.
+                self.session.close_module(address)
+
+    # -- Aufzeichnung (VCDS: Log) ------------------------------------------ #
+    def start_log(
+        self,
+        address: int,
+        groups: list[int],
+        *,
+        interval: float = 0.5,
+        duration: float | None = None,
+        basic: bool = False,
+        out: Path | None = None,
+    ) -> dict:
+        """Messwerte im Hintergrund mitschreiben (Datei im VCDS-CSV-Format)."""
+        with self.lock:
+            self.stop_log()
+            target = out or Path("var/logs") / f"messwerte-{address_text(address).replace(' ', '')}.csv"
+
+            def sampler():
+                columns, rows = [], []
+                with self.with_module(address) as module:
+                    for group in groups:
+                        block = module.read_block(group, basic_setting=basic)
+                        columns.extend(_columns_of(block))
+                        rows.append(row_from_block(block))
+                return columns, rows
+
+            recorder = LogRecorder(
+                sampler,
+                interval=max(0.05, float(interval)),
+                path=target,
+                vehicle=self.session.name,
+                module=f"{address_text(address)}",
+            )
+            recorder.duration = duration if duration and duration > 0 else None
+            recorder.sample()  # erste Zeile legt die Spalten fest
+            if not recorder.columns:
+                raise DiagnosticError("Keine Messwerte gelesen - Aufzeichnung nicht gestartet")
+            recorder.start()
+            self.recorder = recorder
+            self.record_error = ""
+            return recorder.as_dict()
+
+    def stop_log(self) -> dict:
+        """Laufende Aufzeichnung beenden und speichern."""
+        with self.lock:
+            recorder = self.recorder
+            if recorder is None:
+                return {"laufend": False, "zeilen": [], "spalten": [], "gesamt": 0}
+            recorder.stop()
+            self.recorder = None
+            return recorder.as_dict()
+
+    def log_state(self) -> dict:
+        with self.lock:
+            if self.recorder is None:
+                return {"laufend": False, "zeilen": [], "spalten": [], "gesamt": 0, "fehler": []}
+            return self.recorder.as_dict()
+
+    def log_csv(self) -> str:
+        with self.lock:
+            if self.recorder is None:
+                return ""
+            return self.recorder.csv_text()
+
+    def obd(self, *, service: str = "info") -> dict:
+        """OBD-II bedienen - dieselbe Sitzung fuer alle Dienste einer Anfrage."""
+        with self.lock:
+            with ObdSession(self.session) as obd:
+                if service == "clear":
+                    cleared = obd.clear_codes()
+                    return {"transport": obd.transport_name, "geloescht": cleared}
+                payload = obd.as_dict()
+                payload["monitors"] = obd.monitors()
+                payload["live"] = [entry.as_dict() for entry in obd.live()]
+                payload["vag_codes"] = obd.vag_only_codes()
+                payload["freeze_frame"] = [entry.as_dict() for entry in obd.freeze_frame()]
+                return payload
 
     def scan(self) -> tuple[dict, str]:
         with self.lock:
@@ -173,6 +267,22 @@ class _AppState:
     @property
     def last_report(self) -> str:
         return self._last_report
+
+
+def _columns_of(block: dict) -> list:
+    """Spalten eines gelesenen Messwerteblocks (fuer die Aufzeichnung)."""
+    from ..log import Column
+
+    return [
+        Column(
+            group=int(block["group"]),
+            field=int(entry["field"]),
+            text=str(entry.get("text") or f"Feld {entry['field']}"),
+            unit=str(entry.get("unit") or ""),
+            basic=bool(block.get("basic")),
+        )
+        for entry in block["fields"]
+    ]
 
 
 class VagdiagRequestHandler(BaseHTTPRequestHandler):
@@ -278,6 +388,37 @@ class VagdiagRequestHandler(BaseHTTPRequestHandler):
                 with self.state.with_module(address) as module:
                     self._send_json(module.read_block(group, basic_setting=basic))
                 return
+            if route == "/api/obd":
+                self._send_json(self.state.obd())
+                return
+            if route == "/api/log":
+                self._send_json(self.state.log_state())
+                return
+            if route == "/api/log.csv":
+                text = self.state.log_csv()
+                if not text:
+                    self._send_text("Keine Aufzeichnung vorhanden", status=404)
+                    return
+                self._send_text(
+                    text,
+                    content_type="text/csv",
+                )
+                return
+            if route.startswith("/api/actuator/"):
+                address = self._address(route.split("/api/actuator/", 1)[1])
+                with self.state.with_module(address) as module:
+                    self._send_json(
+                        {
+                            "address": address,
+                            "address_text": address_text(address),
+                            "module": module.module.name,
+                            "actuators": module.actuators(),
+                            "active": module.actuator_active,
+                            "basic": module.basic_settings(),
+                            "basic_active": module.basic_setting_group,
+                        }
+                    )
+                return
             if route.startswith("/api/adapt/"):
                 address = self._address(route.split("/api/adapt/", 1)[1])
                 with self.state.with_module(address) as module:
@@ -329,6 +470,46 @@ class VagdiagRequestHandler(BaseHTTPRequestHandler):
                         result = {"ok": True}
                     payload = module.coding()
                     payload.update(result)
+                    self._send_json(payload)
+                return
+            if route == "/api/obd":
+                self._send_json(self.state.obd(service=str(body.get("dienst", "info"))))
+                return
+            if route == "/api/log/start":
+                self._send_json(
+                    self.state.start_log(
+                        int(body.get("address", 1)),
+                        [
+                            int(part)
+                            for part in str(body.get("blocks", "1")).split(",")
+                            if part.strip()
+                        ],
+                        interval=float(body.get("interval", 0.5)),
+                        duration=float(body.get("duration", 0)) or None,
+                        basic=bool(body.get("basic")),
+                    )
+                )
+                return
+            if route == "/api/log/stop":
+                self._send_json(self.state.stop_log())
+                return
+            if route.startswith("/api/actuator/"):
+                address = self._address(route.split("/api/actuator/", 1)[1])
+                with self.state.with_module(address) as module:
+                    if body.get("basic") is not None:
+                        result = module.basic_setting(
+                            int(body["basic"]), bool(body.get("on", True))
+                        )
+                    else:
+                        result = module.output_test(int(body.get("actuator", 0)))
+                    payload = dict(result)
+                    payload["actuators"] = module.actuators()
+                    # "active" ist der Zustand der Stellglieddiagnose,
+                    # "basic_on"/"basic_active" der der Grundeinstellung.
+                    payload["active"] = module.actuator_active
+                    payload["basic_active"] = module.basic_setting_group
+                    if "active" in result:
+                        payload["basic_on"] = bool(result["active"])
                     self._send_json(payload)
                 return
             if route.startswith("/api/adapt/"):

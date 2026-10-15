@@ -26,3 +26,6 @@ C00,Codierung Gateway
 C01,1,1,Verbauliste: Radio
 C01,2,2,Verbauliste: Navigation
 C01,4,4,Verbauliste: Telefon
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Warnleuchten Gateway (Diagnose)

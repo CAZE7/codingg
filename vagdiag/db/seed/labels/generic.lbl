@@ -8,3 +8,7 @@
 001,2,Messwert 2,?,roh,0,255
 001,3,Messwert 3,?,roh,0,255
 001,4,Messwert 4,?,roh,0,255
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Stellglied 1
+A002,2,Stellglied 2

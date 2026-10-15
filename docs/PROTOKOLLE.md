@@ -14,6 +14,8 @@ Test ohne Fahrzeug ermoeglicht.
 | `proto/uds.py` | UDS (ISO 14229) | Golf V |
 | `proto/vwtp.py` | VW TP 2.0 (Transportprotokoll auf CAN) | alle CAN-Module |
 | `proto/isotp.py` | ISO-TP (ISO 15765-2) als Rueckfallebene | optional |
+| `proto/iso14230.py` | ISO 14230 (KWP2000 auf der K-Line) fuer OBD-II/EOBD | Golf IV, Passat B5.5 |
+| `obd/obd2.py`, `obd/session.py` | OBD-II-Dienste (SAE J1979) und ihre Auswertung | alle vier Fahrzeuge |
 
 ## Adressierung
 
@@ -53,7 +55,7 @@ Unterstuetzte Titel (Auszug):
 | `0x29` | Messwerteblock lesen | `0xE7` (3-Byte-Tripel) |
 | `0x28` | Grundeinstellung lesen | `0xE7` |
 | `0x21`/`0x22`/`0x2A` | Anpassung lesen/testen/speichern | `0xE6`/`0x09` |
-| `0x04` | Stellglieddiagnose | `0xF5` |
+| `0x04` | Stellglieddiagnose (Wert 0 = alle abschalten) | `0xF5` |
 | `0x10` | Codierung schreiben | `0xF6` mit Codierung/Werkstattcode |
 | `0x2B` | Login | `0x09`/`0x0A` |
 | `0x09`/`0x0A` | Quittung / Ablehnung | - |
@@ -91,6 +93,7 @@ des hohen Keyword-Bytes. Aus den Keywords ergibt sich die Protokollversion
 | `0x22` | Messwerteblock lesen (Messwerte) |
 | `0x27` | Security Access |
 | `0x2E` | Datensatz schreiben |
+| `0x01`-`0x0A` | OBD-II-Dienste (siehe unten) - VAG nutzt auf der K-Line dieselbe Dienstekennung |
 | `0x30`/`0x31` | Ein-/Ausgang einlesen bzw. steuern (Anpassung, Stellglieder) |
 | `0x3B` | Codierung schreiben |
 | `0x3E` | Tester Present |
@@ -110,6 +113,15 @@ Belegung:
 Der kurze Aufruf `31 01 <Routine hi> <Routine lo>` (RoutineByLocalIdentifier)
 ist vom Speichern eines Kanals durch die Laenge unterschieden.
 
+Stellglieddiagnose und Grundeinstellung laufen auf denselben Diensten:
+
+```
+30 <Stellglied-ID> 01 <Wert>   Stellglied ansteuern   -> 70 <ID> 01 <Wert>
+30 <Stellglied-ID> 00 00       Stellglied abschalten  -> 70 <ID> 00 00
+31 01 FC <Gruppe>              Grundeinstellung an    -> 71 01 FC <Gruppe>
+31 02 FC <Gruppe>              Grundeinstellung aus   -> 71 02 FC <Gruppe>
+```
+
 ## UDS (ISO 14229)
 
 | Dienst | Bedeutung |
@@ -121,7 +133,7 @@ ist vom Speichern eines Kanals durch die Laenge unterschieden.
 | `0x22`/`0x23` | Daten lesen (Kennung bzw. Speicherbereich) |
 | `0x27` | Security Access |
 | `0x2E`/`0x2F` | Datensatz schreiben / Ein-/Ausgang steuern |
-| `0x31` | Routine starten/stoppen/ergebnis |
+| `0x31` | Routine starten/stoppen/ergebnis (Stellglieder `F0<ID>`, Grundeinstellung `FC<Gruppe>`) |
 | `0x3E` | Tester Present |
 
 Kennungen (RIDs), Auszug: `F190` Fahrgestellnummer, `F187`-`F18A`
@@ -176,6 +188,53 @@ Fuer Fahrzeuge, die Diagnose direkt per ISO-TP abwickeln (0x7E0/0x7E8):
 Single- und Multi-Frame-Uebertragung mit Flow-Control und Zeitueberwachung.
 Der Client probiert VW TP 2.0 zuerst und faellt bei Bedarf auf ISO-TP
 zurueck (`ModuleSession._probe_transport`).
+
+## OBD-II / EOBD (SAE J1979)
+
+Die generische Abgasdiagnose spricht auf **CAN** ueber ISO-TP auf
+`0x7E0`/`0x7E8` (ISO 15765-4) und auf der **K-Line** ueber ISO 14230. Antwortet
+auf `0x7E0` niemand, faellt `ObdSession` auf den VW-TP-Kanal zum
+Motorsteuergeraet und danach auf die K-Line zurueck.
+
+| Modus | Inhalt | Umsetzung |
+| --- | --- | --- |
+| `0x01` | Live-Daten, PID 01 = Bereitschaftsbits (MIL, Fehlerzahl, Monitore) | 33 PIDs in `obd/obd2.py`, Einheit und Formel je PID |
+| `0x02` | Freeze Frame (Momentaufnahme zum ersten Fehler) | DTC des Satzes plus Motorlast, Kuehlmittel, Saugrohrdruck, Drehzahl, Geschwindigkeit |
+| `0x03` | Fehlerspeicher gespeichert | nur SAE-Codes; VAG-Codes ohne SAE-Schreibweise erscheinen getrennt |
+| `0x04` | Fehlerspeicher loeschen (MIL, Bereitschaft, Freeze Frame) | - |
+| `0x06` | Ergebnisse der Bordueberwachung | MID/TID mit Wert und erlaubtem Bereich |
+| `0x07` | schwebende Fehler | - |
+| `0x09` | Fahrzeuginformation: VIN, Softwarestand, Pruefsumme (CVN), SG-Name | Modus 09 PID 02/04/06/0A |
+| `0x0A` | dauerhafte Fehler | - |
+
+Die Antwort traegt den Dienst mit gesetztem Bit 6 (`0x41` auf `0x01`), jeder
+PID-Wert folgt in seinem eigenen Datenbyte; ein negativer Bescheid ist
+`0x7F <Dienst> <Grund>`. Mehrbyte-PIDs liefern zwei Datenbytes (A, B),
+Einbyte-PIDs eines - fehlt das zweite, wird mit 0 gerechnet
+(`PidInfo.text`), damit auch echte Steuergeraete korrekt angezeigt werden.
+
+Bereitschaft (PID 01): Byte A = MIL (Bit 7) und Fehlerzahl (Bits 0-6),
+Byte B Bit 3 = Selbstzuendung (Diesel), Bytes C/D tragen je ein Bit pro
+Monitor; ein **gesetztes** Bit bedeutet "Test noch nicht abgeschlossen".
+
+## ISO 14230 (KWP2000 auf der K-Line)
+
+Auf der K-Line laeuft OBD-II als KWP2000-Rahmen nach ISO 14230:
+
+```
+FMT | Ziel | Quelle | Daten... | CS      FMT = 0x80 | (len(Daten) + 3), CS = Summe mod 256
+```
+
+* Ziel ist die Steuergeraeteadresse (`0x01` Motor), Quelle die Testeradresse
+  `0xF1`.
+* Vor dem ersten Rahmen steht die 5-Baud-Adressierung wie bei KWP1281.
+* Das Steuergeraet quittiert jedes Byte mit seinem Einerkomplement; der Tester
+  quittiert ebenso. Ein Byte mit gesetztem Bit 7 beginnt einen neuen Rahmen -
+  damit sind beide Dialogarten auf derselben Leitung unterscheidbar, ohne dass
+  ein Tester die jeweilige Gegenstelle kennen muss.
+* KWP1281-Dialog und ISO-14230-Rahmen teilen sich dieselbe Leitung: fuer die
+  VAG-Diagnose wird der OBD-Tester kurz abgehaengt und danach neu angemeldet
+  (`ObdSession.vag_only_codes`).
 
 ## Messwerte und Einheiten
 

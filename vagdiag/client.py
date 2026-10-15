@@ -105,6 +105,8 @@ class ModuleSession:
         self.ident_lines: list[str] = []
         self._label: dict | None = None
         self._open = False
+        self._actuator_active: int = 0
+        self._basic_group: int = 0
 
     # ------------------------------------------------------------------ #
     # Verbindungsaufbau
@@ -578,17 +580,121 @@ class ModuleSession:
                 return entry.get("text") or ""
         return ""
 
-    def actuator_test(self, value: int) -> dict:
+    # ------------------------------------------------------------------ #
+    # Stellglieddiagnose (Output Test) und Grundeinstellung
+    # ------------------------------------------------------------------ #
+    def actuators(self) -> list[dict]:
+        """Stellgliedliste des Steuergeraets in der Reihenfolge der Labeldatei."""
+        entries = self.db.actuator_list(self.module)
+        return [
+            {
+                "id": int(entry["actuator_id"]),
+                "step": int(entry["step"]),
+                "text": entry.get("text") or entry.get("short_text") or "",
+                "active": int(entry["actuator_id"]) == self._actuator_active,
+            }
+            for entry in entries
+        ]
+
+    @property
+    def actuator_active(self) -> int:
+        """Zuletzt angesteuertes Stellglied (0 = alle aus)."""
+        return self._actuator_active
+
+    def output_test(self, actuator_id: int) -> dict:
+        """Stellglied ansteuern (``0`` schaltet alle wieder ab).
+
+        VCDS nennt das "Stellglieddiagnose": die Liste wird der Reihe nach
+        durchgeschaltet, jedes Stellglied laesst sich einzeln testen.
+        """
+        actuator_id = int(actuator_id)
+        text = ""
+        for entry in self.actuators():
+            if entry["id"] == actuator_id:
+                text = entry["text"]
+                break
         if self.kline is not None:
-            data = self.kline.actuator_test(value, timeout=self.session.timeout)
-            return {"ok": True, "response": data.hex(" ").upper()}
-        if self.kwp2000 is not None:
-            self.kwp2000.actuator(0x01, int(value))
-            return {"ok": True, "response": "Stellglied angesteuert"}
-        if self.uds is not None:
-            self.uds.actuator(0xF001, int(value))
-            return {"ok": True, "response": "Stellglied angesteuert"}
-        raise DiagnosticError("Dieser Transport kann kein Stellglied ansteuern")
+            data = self.kline.actuator_test(actuator_id, timeout=self.session.timeout)
+            response = data.hex(" ").upper()
+        elif self.kwp2000 is not None:
+            self.kwp2000.actuator_switch(actuator_id, actuator_id != 0)
+            response = f"Stellglied {actuator_id:02d} geschaltet"
+        elif self.uds is not None:
+            self.uds.actuator_switch(actuator_id, actuator_id != 0)
+            response = f"Stellglied {actuator_id:02d} geschaltet"
+        else:
+            raise DiagnosticError("Dieser Transport kann kein Stellglied ansteuern")
+        self._actuator_active = actuator_id
+        return {
+            "ok": True,
+            "actuator": actuator_id,
+            "text": text,
+            "response": response,
+        }
+
+    def actuator_test(self, value: int) -> dict:
+        """Kurzform von :meth:`output_test` (Kompatibilitaet)."""
+        return self.output_test(int(value))
+
+    def basic_settings(self) -> list[dict]:
+        """Grundeinstellungsbloecke (B-Eintraege) der Labeldatei."""
+        label = self.label() or {}
+        entries = [
+            entry
+            for entry in label.get("measuring", [])
+            if entry.get("basic") and int(entry["field"]) == 0
+        ]
+        return [
+            {"group": int(entry["block"]), "text": entry.get("text") or ""}
+            for entry in sorted(entries, key=lambda item: int(item["block"]))
+        ]
+
+    @property
+    def basic_setting_group(self) -> int:
+        """Aktive Grundeinstellung (0 = keine)."""
+        return self._basic_group
+
+    def basic_setting(self, group: int, on: bool = True) -> dict:
+        """Grundeinstellung starten oder beenden.
+
+        VCDS liest waehrend der Grundeinstellung denselben Block wie sonst,
+        das Steuergeraet arbeitet aber im Grundstellungsmodus (z. B. fuer
+        Foerderbeginn oder Partikelfilter-Regeneration).
+        """
+        group = int(group)
+        block: dict | None = None
+        if self.kline is not None:
+            # KWP1281: der Grundstellungsblock selbst schaltet den Modus um -
+            # Blocktitel 0x28 startet, 0x29 beendet die Grundeinstellung.
+            block = self.read_block(group, basic_setting=on)
+            mode = on
+        elif self.kwp2000 is not None:
+            self.kwp2000.basic_setting_switch(group, on)
+            mode = on
+        elif self.uds is not None:
+            self.uds.basic_setting_switch(group, on)
+            mode = on
+        else:
+            raise DiagnosticError("Dieser Transport kann keine Grundeinstellung")
+        if self.kline is None and mode:
+            # Auch auf CAN liefert VCDS die Werte im Grundstellungsmodus
+            try:
+                block = self.read_block(group, basic_setting=True)
+            except DiagnosticError:
+                block = None
+        self._basic_group = group if mode else 0
+        text = ""
+        for entry in self.basic_settings():
+            if entry["group"] == group:
+                text = entry["text"]
+                break
+        return {
+            "ok": True,
+            "group": group,
+            "active": bool(mode),
+            "text": text,
+            "block": block,
+        }
 
     def login(self, code: int) -> bool:
         if self.kline is not None:

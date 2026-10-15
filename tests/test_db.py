@@ -108,7 +108,7 @@ class DatabaseBuildTest(unittest.TestCase):
         modules = self.db.modules_for_vehicle("VW Golf IV 1.9 TDI (2001)")
         engine = next(module for module in modules if module.address == 1)
         label = self.db.label_for_module(engine)
-        self.assertEqual(self.db.block_text(label, 1, 0), "Grundeinstellung (Leerlauf)")
+        self.assertEqual(self.db.block_text(label, 1, 0), "Leerlauf (Einspritzmenge)")
         self.assertEqual(self.db.block_text(label, 1, 1), "Motordrehzahl")
 
     def test_anpassungskanaele(self) -> None:

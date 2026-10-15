@@ -96,6 +96,17 @@ CREATE TABLE IF NOT EXISTS measuring_block (
     UNIQUE (label_id, block, field, basic)
 );
 
+-- Stellglieddiagnose ("Output Test"): A-Eintraege der Label-Datei
+CREATE TABLE IF NOT EXISTS actuator_entry (
+    id          INTEGER PRIMARY KEY,
+    label_id    INTEGER NOT NULL REFERENCES label_file(id) ON DELETE CASCADE,
+    actuator_id INTEGER NOT NULL,               -- Wert, der zum SG geschickt wird
+    step        INTEGER NOT NULL DEFAULT 0,     -- Reihenfolge in der Liste
+    text        TEXT,
+    short_text  TEXT,
+    UNIQUE (label_id, actuator_id)
+);
+
 CREATE TABLE IF NOT EXISTS coding_entry (
     id          INTEGER PRIMARY KEY,
     label_id    INTEGER NOT NULL REFERENCES label_file(id) ON DELETE CASCADE,

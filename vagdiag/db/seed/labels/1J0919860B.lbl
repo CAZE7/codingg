@@ -36,3 +36,9 @@ C01,2,3,Länderkennung USA
 L02,Adaption Servicerückstellung
 L03,Adaption Wegstreckenimpuls
 L50,Adaption Wegfahrsperre
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kontrollleuchten Kombiinstrument
+A002,2,Zeigerinstrumente (Anschlag)
+A003,3,Signalton / Gong
+A004,4,Wegfahrsperren-Warnleuchte

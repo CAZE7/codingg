@@ -14,6 +14,10 @@ Syntax ab (vgl. Referenzparser ``PyVCDS/label.py``):
     Messwertbeschriftung (Block ``NNN``, Feld ``F``).
 ``BNNN,F,Text``
     Eintrag fuer die Grundeinstellung ("Basic Setting").
+``A<ID>,<Schritt>,Text``
+    Eintrag der Stellglieddiagnose ("Output Test"): ``ID`` wird zum
+    Steuergeraet geschickt, ``Schritt`` gibt die Reihenfolge vor (0 = Liste
+    ohne feste Reihenfolge).
 ``C<Gruppe>,<Wert>,Text``
     Eintrag der Codierhilfe ("Coding").
 ``C<Gruppe>,<Bit>,<Wert>,Text``
@@ -43,6 +47,7 @@ _REDIR_RE = re.compile(r"^Redir\s*:\s*(\S+)\s*$", re.IGNORECASE)
 _SECTION_RE = re.compile(r"^:(\d{1,3})(?:,(\d))?\s*$")
 _MEASURE_RE = re.compile(r"^(\d{1,3}),(\d)(?:,(.*))?$")
 _BASIC_RE = re.compile(r"^B(\d{1,3}),(\d)(?:,(.*))?$", re.IGNORECASE)
+_ACTUATOR_RE = re.compile(r"^A(\d{1,3}),(\d)(?:,(.*))?$", re.IGNORECASE)
 _CODING_RE = re.compile(r"^([CL])(\d{1,3}),(.*)$", re.IGNORECASE)
 
 
@@ -100,6 +105,7 @@ class LabelFile:
     measuring: list[LabelEntry] = field(default_factory=list)
     basic_setting: list[LabelEntry] = field(default_factory=list)
     coding: list[LabelCoding] = field(default_factory=list)
+    actuators: list[LabelEntry] = field(default_factory=list)
 
     # -- Abfragen ----------------------------------------------------------- #
     def block_text(self, block: int) -> str:
@@ -117,6 +123,10 @@ class LabelFile:
     def coding_for(self, block: int) -> list[LabelCoding]:
         return [entry for entry in self.coding if entry.block == block]
 
+    def actuator_list(self) -> list[LabelEntry]:
+        """Stellglieddiagnose-Liste in der Reihenfolge der Schrittspalte."""
+        return sorted(self.actuators, key=lambda entry: (entry.field, entry.block))
+
     def as_dict(self) -> dict:
         return {
             "name": self.name,
@@ -125,6 +135,7 @@ class LabelFile:
             "measuring": [e.as_dict() for e in self.measuring],
             "basic_setting": [e.as_dict() for e in self.basic_setting],
             "coding": [c.as_dict() for c in self.coding],
+            "actuators": [e.as_dict() for e in self.actuators],
         }
 
 
@@ -173,6 +184,14 @@ def parse_label_text(text: str, name: str = "label.lbl") -> LabelFile:
 
         if _SECTION_RE.match(line):
             # Abschnittsueberschrift - die Zuordnung erfolgt ueber die Eintraege
+            continue
+
+        actuator = _ACTUATOR_RE.match(line)
+        if actuator:
+            entry = LabelEntry(block=int(actuator.group(1)), field=int(actuator.group(2)))
+            if actuator.group(3):
+                _parse_entry_rest(entry, actuator.group(3))
+            label.actuators.append(entry)
             continue
 
         basic = _BASIC_RE.match(line)

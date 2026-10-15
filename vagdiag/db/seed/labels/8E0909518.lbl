@@ -39,3 +39,11 @@ C03,00003 = Frontantrieb, Automatikgetriebe
 C04,00004 = Allradantrieb, Automatikgetriebe
 L01,Adaption Leerlaufdrehzahl
 L02,Adaption Lambda-Regelung
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kühlerlüfter
+A002,2,Einspritzventile Zylinder 1-4
+A003,3,Ladedruckregelventil (Turbolader)
+A004,4,Nockenwellenversteller
+A005,5,Sekundärluftpumpe
+A006,6,Abgasklappe

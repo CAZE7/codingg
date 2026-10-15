@@ -27,3 +27,7 @@ C01,0,Kein Airbag
 C01,1,2-Airbag Fahrer/Beifahrer
 C01,2,4-Airbag mit Seitenairbags
 C01,3,6-Airbag mit Kopfairbags
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Airbag-Warnleuchte
+A002,2,Beifahrer-Airbag Abschaltung (Leuchte)

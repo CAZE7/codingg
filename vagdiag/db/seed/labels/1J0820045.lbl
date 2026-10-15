@@ -27,3 +27,9 @@ C00,Codierung Klimaanlage
 C01,1,1,Linkslenker
 C01,2,2,Rechtslenker
 L01,Adaption Temperaturkennlinie
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Klimakompressor-Magnetkupplung
+A002,2,Frischluft-/Umluftklappe
+A003,3,Kühlmittelgebläse Innenraum
+A004,4,Magnetventil Kühlmittelabsperrung
