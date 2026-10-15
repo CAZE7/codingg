@@ -47,8 +47,9 @@ Autoscan abgeschlossen in 6.3 s - 6/6 Steuergeraete antworten, 7 Fehlercode(s).
 ## Schnellstart
 
 ```bash
-# Datenbank aufbauen (Schemapruefung + Seeds + Label-Dateien)
+# Datenbank aufbauen (Schema + Seeds + Label-Dateien) und pruefen
 python3 -m vagdiag.cli db build --force
+python3 -m vagdiag.cli db check
 
 # Fahrzeuge und Steuergeraete ansehen
 python3 -m vagdiag.cli vehicles
@@ -116,6 +117,12 @@ automatisch aufgebaut. Sie enthaelt unter anderem:
 * `dtc` - Fehlercodes: VAG-5-stellig, SAE/OBD-II und UDS
 * `adaptation_channel` - Anpassungskanaele je Steuergeraet/Label-Datei (18 Eintraege)
 
+Der Bestand laesst sich jederzeit pruefen: `vagdiag db check` vergleicht
+Adressen, Labeldateien, Messwerte, Codier- und Anpassungshilfen sowie
+Fehlercodes auf Vollstaendigkeit und Stimmigkeit (Rueckgabewert 1, sobald ein
+Fehler dabei ist - als Pruefschritt in einer Pipeline nutzbar). Befunde als
+JSON: `vagdiag db check --json`.
+
 Eigene Daten lassen sich per JSON-Seeds, CSV-Import (`import_dtc_csv`) oder
 zusaetzliche Label-Dateien (`load_label_dir`) ergaenzen - siehe
 [docs/DATENBANK.md](docs/DATENBANK.md).
@@ -143,10 +150,13 @@ with VehicleSession(vehicle_name="VW Golf IV 1.9 TDI (2001)") as session:
 python3 -m unittest discover -s tests -t .
 ```
 
-44 Tests: KWP1281-Blockcodec samt Dialog, Label-Datei-Parser,
-Datenbankaufbau (inkl. Redir-Ketten, Seed-Pruefung, CSV-Import),
-Autoscan-Formatierung sowie die Zusammenfuehrung von Formel- und
-Label-Einheiten.
+83 Tests: KWP1281-Blockcodec samt Dialog, Label-Datei-Parser, Datenbankaufbau
+samt Selbstpruefung (inkl. Redir-Ketten, Seed-Pruefung, CSV-Import, absichtlich
+kaputte Seeds), Autoscan-Formatierung, Adress- und Codierungsanzeige, die
+Zusammenfuehrung von Formel- und Label-Einheiten, komplette Diagnosedialoge
+gegen den Simulator (K-Line, VW TP 2.0, KWP2000, UDS, Autoscan) sowie die
+Kanalhygiene der Busse (beendete Kanaele werden abgemeldet, ein Testerkanal
+hoert nur den eigenen Dialog mit).
 
 ```bash
 python3 -m unittest discover -s tests -t . -v

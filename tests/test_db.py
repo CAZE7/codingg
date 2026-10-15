@@ -222,3 +222,97 @@ class LabelChainTest(unittest.TestCase):
         self.assertEqual(address_text(46), "46")
         self.assertEqual(address_wire(46), 0x46)
         self.assertEqual(address_wire(1), 0x01)
+
+
+class DatabaseCheckTest(unittest.TestCase):
+    """Selbstpruefung des Bestands (vagdiag db check)."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        import tempfile
+
+        cls._tmp = tempfile.TemporaryDirectory()
+        cls.db = Database(Path(cls._tmp.name) / "pruefung.sqlite3")
+        cls.db.build(force=True)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.db.close()
+        cls._tmp.cleanup()
+
+    def test_gebaute_datenbank_ist_beanstandungsfrei(self) -> None:
+        findings = self.db.check()
+        self.assertEqual(findings, [], f"unerwartete Befunde: {findings}")
+
+    def test_codierung_null_wird_gemeldet(self) -> None:
+        connection = self.db.connect()
+        connection.execute(
+            "UPDATE vehicle_module SET coding = '0' WHERE address = 3 AND vehicle_id = 1"
+        )
+        connection.commit()
+        try:
+            findings = self.db.check()
+            messages = [finding["message"] for finding in findings]
+            self.assertTrue(
+                any("Codierung 0" in message for message in messages), messages
+            )
+        finally:
+            connection.execute(
+                "UPDATE vehicle_module SET coding = '0021505' WHERE address = 3 AND vehicle_id = 1"
+            )
+            connection.commit()
+
+    def test_fehlende_labeldatei_wird_als_fehler_gemeldet(self) -> None:
+        connection = self.db.connect()
+        connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute(
+            "UPDATE vehicle_module SET label_file = 'gibtsnicht.lbl' WHERE address = 17 AND vehicle_id = 1"
+        )
+        connection.commit()
+        try:
+            findings = self.db.check()
+            errors = [finding for finding in findings if finding["level"] == "fehler"]
+            self.assertTrue(
+                any("gibtsnicht.lbl" in finding["message"] for finding in errors), findings
+            )
+        finally:
+            connection.execute(
+                "UPDATE vehicle_module SET label_file = '1J0919860B.lbl' WHERE address = 17 AND vehicle_id = 1"
+            )
+            connection.commit()
+
+    def test_redir_kette_zaehlt_als_verwendete_labeldatei(self) -> None:
+        findings = self.db.check()
+        self.assertFalse(
+            any("038906019HJ.lbl" in finding["scope"] for finding in findings), findings
+        )
+
+    def test_passat_hat_bloecke_ueber_die_redir_datei(self) -> None:
+        modules = self.db.modules_for_vehicle("VW Passat B5.5 1.9 TDI (2003)")
+        engine = next(module for module in modules if module.address == 1)
+        self.assertEqual(engine.label_file, "038906019HJ.lbl")
+        blocks = self.db.block_numbers(engine)
+        self.assertIn(1, blocks)
+        self.assertGreaterEqual(len(blocks), 3)
+
+    def test_verwaiste_labeldatei_wird_gemeldet(self) -> None:
+        connection = self.db.connect()
+        connection.execute(
+            "INSERT INTO label_file (name, part_number, notes, source) VALUES (?, ?, ?, ?)",
+            ("testfile.lbl", "TEST000", "", "Test"),
+        )
+        connection.commit()
+        try:
+            findings = self.db.check()
+            self.assertTrue(
+                any("testfile.lbl" in finding["scope"] for finding in findings), findings
+            )
+        finally:
+            connection.execute("DELETE FROM label_file WHERE name = 'testfile.lbl'")
+            connection.commit()
+
+    def test_generic_label_ist_rueckfallebene(self) -> None:
+        findings = self.db.check()
+        self.assertFalse(
+            any("generic.lbl" in finding["scope"] for finding in findings), findings
+        )

@@ -171,7 +171,9 @@ class ModuleSession:
             bus,
             address_wire(self.module.address),
             proto=0 if uds else 1,
-            timeout=0.3,
+            # Etwas grosszuegiger als VCDS: die Simulation plant Threads ein,
+            # ein zu knapper Wert erzeugt sporadische Zeitfehler.
+            timeout=0.6,
             on_event=self.on_event,
         )
         channel.start()
@@ -279,7 +281,7 @@ class ModuleSession:
         coding = self.ident_result.coding if self.ident_result is not None else None
         wsc = self.ident_result.workshop_code if self.ident_result is not None else None
         coding_text = (
-            f"{coding:05d}" if coding is not None else (self.module.coding or "")
+            self._padded_coding(str(coding)) if coding is not None else (self.module.coding or "")
         )
         label = self.label()
         return {
@@ -472,16 +474,23 @@ class ModuleSession:
             value = self.ident_result.coding if self.ident_result else None
         elif self.kwp2000 is not None:
             try:
-                value = self.kwp2000.coding().strip("\x00 ")
+                value = self._padded_coding(self.kwp2000.coding().strip("\x00 "))
             except Kwp2000Error as exc:
                 value = f"nicht lesbar ({exc})"
         elif self.uds is not None:
             try:
                 raw = self.uds.coding()
                 value = raw.decode("latin-1", errors="replace").strip("\x00 ")
+                value = self._padded_coding(value)
             except UdsError as exc:
                 value = f"nicht lesbar ({exc})"
-        if value is None or value == "":
+        if isinstance(value, int):
+            value = str(value)
+        if value:
+            # Steuergeraete melden die Codierung als Zahl; VCDS zeigt die
+            # Stellenzahl des Bestands (00002, 0021505, 0000071).
+            value = self._padded_coding(value)
+        else:
             value = self.module.coding
         label = self.label() or {}
         return {
@@ -548,6 +557,20 @@ class ModuleSession:
         else:
             raise DiagnosticError("Dieser Transport kann keine Anpassung speichern")
         return {"ok": True, "channel": channel, "value": int(value)}
+
+    def _padded_coding(self, value: str) -> str:
+        """Codierung mit der Stellenzahl des Bestands anzeigen.
+
+        Steuergeraete liefern die Codierung als Zahl; VCDS zeigt sie mit
+        fuehrenden Nullen (``0021505``). Hat die hinterlegte Codierung mehr
+        Stellen, wird entsprechend aufgefuellt - auch nach einer Aenderung
+        (``00002`` -> ``00003``).
+        """
+        stored = (self.module.coding or "").strip()
+        text = (value or "").strip()
+        if text.isdigit() and stored.isdigit() and len(stored) > len(text):
+            return text.rjust(len(stored), "0")
+        return value
 
     def _channel_text(self, channel: int) -> str:
         for entry in self.adaptations():

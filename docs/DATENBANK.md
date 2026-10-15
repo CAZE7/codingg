@@ -9,6 +9,7 @@ Quelle der Wahrheit.
 ```bash
 python3 -m vagdiag.cli db build --force     # neu aufbauen
 python3 -m vagdiag.cli db stats             # Kennzahlen anzeigen
+python3 -m vagdiag.cli db check             # Bestand pruefen
 ```
 
 Speicherort in dieser Reihenfolge: `--db <pfad>`, `$VAGDIAG_DB`,
@@ -116,6 +117,29 @@ count = database.import_dtc_csv("meine_codes.csv")
 Ein grosser Teil der allgemeinen OBD-II-Codes ist bereits als Seed enthalten;
 die CSV-Schnittstelle ist der Weg, eine vollstaendige Liste nachzuladen.
 
+## Selbstpruefung
+
+`Database.check()` (Kommando `vagdiag db check`) vergleicht den aufgebauten
+Bestand mit dem, was die Diagnose erwartet. Geprueft wird unter anderem:
+
+| Pruefung | Stufe |
+| --- | --- |
+| Schemaversion entspricht `SCHEMA_VERSION` | Fehler |
+| Steuergeraeteadresse existiert in `control_module` | Fehler |
+| Labeldatei eines Steuergeraets existiert (auch wenn `generic.lbl` einspringt) | Fehler |
+| `Redir:`-Ziel einer Labeldatei existiert | Fehler |
+| Codier- und Anpassungshilfen: Art gueltig, Wert im Bereich, Bereich nicht leer | Fehler |
+| Fehlercode: Text vorhanden, Art gueltig, VAG-Code 1..65535, SAE-Code im Format `P/C/B/U####` | Fehler |
+| Messwertbereich (`min` < `max`) | Fehler |
+| Codierung eines Steuergeraets vorhanden, numerisch und ungleich 0 | Warnung |
+| Messwerteblock ohne Titel, Labeldatei von keinem Fahrzeug verwendet | Warnung |
+| Anpassungskanal ohne Beschreibung oder Wertebereich | Warnung |
+
+Der Rueckgabewert ist 1, sobald mindestens ein Fehler gefunden wurde - das
+Kommando taugt damit als Pruefschritt. `--json` liefert die Befunde maschinen-
+lesbar. Absichtlich nur als Rueckfallebene dienende Labeldateien stehen in
+`db.FALLBACK_LABELS` und werden nicht als "unbenutzt" beanstandet.
+
 ## Zugriff aus Python
 
 ```python
@@ -132,6 +156,7 @@ database.adaptation_channels(module)               # Anpassungskanaele
 database.label_for_module(module)                  # Labeldatei inkl. Redir
 database.dtc_lookup("P0420")
 database.stats()
+database.check()                                   # Befunde der Selbstpruefung
 ```
 
 Alle Zugriffe laufen ueber dieselbe Verbindung mit

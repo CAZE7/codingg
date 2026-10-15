@@ -190,6 +190,9 @@ class CanNode(ABC):
         if self._running:
             return
         self._running = True
+        # Nach einem stop() haengt der Knoten nicht mehr am Bus - beim Start
+        # wird er wieder angemeldet.
+        self.bus.attach(self)
         self._thread = threading.Thread(
             target=self._run, name=f"can-{self.name}", daemon=True
         )
@@ -203,6 +206,9 @@ class CanNode(ABC):
             self._thread.join(timeout=timeout)
             self._thread = None
         self.on_stop()
+        # Wichtig: ein beendeter Knoten darf keine Rahmen mehr mitlesen und
+        # beantworten (sonst quittieren alte Testerkanaele fremde Dialoge).
+        self.bus.detach(self)
         self.bus.detach(self)
 
     def _run(self) -> None:

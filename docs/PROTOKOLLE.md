@@ -163,6 +163,13 @@ KWP-Nutzdaten (Protokollversion 1) beginnen mit einer 16-Bit-Big-Endian-Laenge;
 pro Frame passen 7 Nutzbytes. Die Simulation benutzt dieselben Frames, der
 Trace der Weboberflaeche zeigt sie im Rohformat.
 
+Ein Testerkanal hoert nur die beiden IDs seines eigenen Dialogs mit: die
+Tester-ID (`0x200 + 0xF1`) und die ID des angesprochenen Steuergeraets. Quittet
+ein Kanal fremde Frames mit, "sieht" das Steuergeraet Quittungen, die nicht zu
+seiner Uebertragung gehoeren - der Dialog laeuft dann in Sequenz- und
+Zeitfehler. Aus demselben Grund wird ein beendeter Kanal vom Bus abgemeldet
+(`CanNode.stop()`); ein erneuter `start()` meldet ihn wieder an.
+
 ## ISO-TP
 
 Fuer Fahrzeuge, die Diagnose direkt per ISO-TP abwickeln (0x7E0/0x7E8):

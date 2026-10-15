@@ -39,6 +39,9 @@ __all__ = ["Database", "DatabaseError", "repo_root", "default_db_path"]
 
 SCHEMA_VERSION = "3"
 
+#: Labeldateien, die absichtlich nur als Rueckfallebene dienen
+FALLBACK_LABELS = {"generic.lbl"}
+
 
 class DatabaseError(Exception):
     """Fehler beim Aufbau oder Lesen der Datenbank."""
@@ -394,6 +397,148 @@ class Database:
         return label_id
 
     # ------------------------------------------------------------------ #
+    # Selbstpruefung
+    # ------------------------------------------------------------------ #
+    def check(self) -> list[dict]:
+        """Prueft Bestand und Seeds auf Widersprueche.
+
+        Liefert eine Liste von Befunden mit ``level`` ("fehler"/"warnung"),
+        ``scope`` (betroffener Eintrag) und ``message``. Die Pruefung arbeitet
+        auf der aufgebauten Datenbank - sie deckt damit genau das ab, was die
+        Diagnose spaeter sieht.
+        """
+        import re as _re
+
+        connection = self.connect()
+        findings: list[dict] = []
+
+        def add(level: str, scope: str, message: str) -> None:
+            findings.append({"level": level, "scope": scope, "message": message})
+
+        meta = self.meta()
+        if meta.get("schema_version") != SCHEMA_VERSION:
+            add(
+                "fehler",
+                "meta",
+                f"Schema-Version {meta.get('schema_version')} statt {SCHEMA_VERSION} "
+                "- Datenbank mit 'db build --force' neu aufbauen",
+            )
+
+        labels = {
+            row["name"]: row
+            for row in connection.execute("SELECT * FROM label_file").fetchall()
+        }
+
+        # --- Fahrzeuge und ihre Steuergeraete --------------------------- #
+        used_labels: set[str] = set()
+        for vehicle in self.vehicles():
+            modules = self.modules_for_vehicle(vehicle["id"])
+            if not modules:
+                add("warnung", f"Fahrzeug {vehicle['name']}", "keine Steuergeraete hinterlegt")
+            for module in modules:
+                scope = f"{vehicle['name']} / {module.address_text} {module.name}"
+                if self.control_module(module.address) is None:
+                    add("fehler", scope, "Adresse fehlt in control_module")
+                if not module.part_number:
+                    add("fehler", scope, "keine Teilenummer hinterlegt")
+                if not module.component:
+                    add("warnung", scope, "kein Bauteilname hinterlegt")
+                if not module.label_file:
+                    add("warnung", scope, "keine Labeldatei hinterlegt")
+                elif module.label_file not in labels:
+                    add("fehler", scope, f"Labeldatei {module.label_file} fehlt in der Datenbank")
+                coding = (module.coding or "").strip()
+                if not coding:
+                    add("warnung", scope, "keine Codierung hinterlegt")
+                elif not coding.isdigit():
+                    add("warnung", scope, f"Codierung {coding!r} ist nicht numerisch")
+                elif int(coding) == 0:
+                    add("warnung", scope, "Codierung 0 ist unplausibel")
+                label = self.label_for_module(module)
+                if label is None:
+                    add("warnung", scope, "keine Labeldatei auffindbar")
+                    continue
+                used_labels.update(self._label_chain(module.label_file))
+                blocks = self.block_numbers(module)
+                if not blocks:
+                    add("warnung", scope, "Labeldatei nennt keinen Messwerteblock")
+                for block in blocks:
+                    if not self.block_text(label, block, 0):
+                        add("warnung", scope, f"Messwerteblock {block:03d} ohne Titel")
+
+        # --- Labeldateien ----------------------------------------------- #
+        for name, row in labels.items():
+            if not row["part_number"]:
+                add("warnung", f"Labeldatei {name}", "keine Teilenummer hinterlegt")
+            if name not in used_labels and name not in FALLBACK_LABELS:
+                add("warnung", f"Labeldatei {name}", "von keinem Fahrzeug verwendet")
+        for row in connection.execute(
+            """SELECT lf.name AS name, lr.target AS target FROM label_redirect lr
+               JOIN label_file lf ON lf.id = lr.label_id"""
+        ).fetchall():
+            if row["target"] not in labels:
+                add("fehler", f"Labeldatei {row['name']}", f"Redir-Ziel {row['target']} fehlt")
+
+        # --- Messwertebloecke und Codierhilfen --------------------------- #
+        for row in connection.execute(
+            """SELECT lf.name AS name, mb.* FROM measuring_block mb
+               JOIN label_file lf ON lf.id = mb.label_id"""
+        ).fetchall():
+            scope = f"{row['name']} Block {int(row['block']):03d} Feld {row['field']}"
+            if not (row["text"] or row["short_text"]):
+                add("warnung", scope, "weder Text noch Kurztext hinterlegt")
+            low, high = row["min_value"], row["max_value"]
+            if low is not None and high is not None and high <= low:
+                add("fehler", scope, f"Bereich {low}-{high} ist leer oder verkehrt")
+        for row in connection.execute(
+            """SELECT lf.name AS name, ce.* FROM coding_entry ce
+               JOIN label_file lf ON lf.id = ce.label_id"""
+        ).fetchall():
+            scope = f"{row['name']} Codierhilfe {row['kind']}{int(row['block']):02d}"
+            if not row["text"]:
+                add("warnung", scope, "ohne Beschreibung")
+            if row["kind"] not in ("C", "L"):
+                add("fehler", scope, f"unbekannte Art {row['kind']!r}")
+            if row["value"] is not None and not 0 <= int(row["value"]) <= 0xFFFF:
+                add("fehler", scope, f"Wert {row['value']} ausserhalb 0..65535")
+
+        # --- Anpassungskanaele ------------------------------------------ #
+        for row in connection.execute("SELECT * FROM adaptation_channel").fetchall():
+            scope = f"Anpassung Kanal {row['channel']} (Adresse {row['module_address']})"
+            if row["label_id"] is None and row["module_address"] is None:
+                add("fehler", scope, "weder Labeldatei noch Adresse zugeordnet")
+            low, high = row["min_value"], row["max_value"]
+            if low is not None and high is not None and high <= low:
+                add("fehler", scope, f"Bereich {low}-{high} ist leer oder verkehrt")
+            if not (row["text"] or "").strip():
+                add("warnung", scope, "ohne Beschreibung")
+            if low is None or high is None:
+                add("warnung", scope, "ohne Wertebereich")
+
+        # --- Fehlercodes ------------------------------------------------- #
+        pattern = _re.compile(r"^[PCBU][0-9A-F]{4}$")
+        for row in connection.execute("SELECT * FROM dtc").fetchall():
+            scope = f"Fehlercode {row['code']}"
+            if not (row["text"] or "").strip():
+                add("fehler", scope, "ohne Beschreibung")
+            if row["kind"] not in ("vag", "sae"):
+                add("fehler", scope, f"unbekannte Art {row['kind']!r}")
+            if row["kind"] == "vag" and (row["vag_code"] is None or not 1 <= row["vag_code"] <= 0xFFFF):
+                add("fehler", scope, "VAG-Code fehlt oder liegt ausserhalb 1..65535")
+            if row["sae_code"] and not pattern.match(row["sae_code"]):
+                add("fehler", scope, f"SAE-Code {row['sae_code']!r} hat kein gueltiges Format")
+
+        # --- Plataformen ------------------------------------------------- #
+        for row in connection.execute(
+            """SELECT p.name AS name FROM platform p
+               LEFT JOIN vehicle v ON v.platform_id = p.id
+               GROUP BY p.id HAVING COUNT(v.id) = 0"""
+        ).fetchall():
+            add("warnung", f"Plattform {row['name']}", "kein Fahrzeug zugeordnet")
+
+        return findings
+
+    # ------------------------------------------------------------------ #
     # Import (Erweiterung)
     # ------------------------------------------------------------------ #
     def import_dtc_csv(self, path: str | Path) -> int:
@@ -725,22 +870,33 @@ class Database:
         return self.adaptation_channels(module)
 
     def block_numbers(self, module: ModuleInfo) -> list[int]:
-        """Messwertebloecke, die im Label des Steuergeraets hinterlegt sind."""
+        """Messwertebloecke, die im Label des Steuergeraets hinterlegt sind.
+
+        Verweist die Labeldatei per ``Redir:`` auf eine Basisdatei, gelten
+        deren Bloecke mit (siehe :meth:`_label_chain`).
+        """
         connection = self.connect()
-        rows = connection.execute(
-            """SELECT DISTINCT mb.block FROM measuring_block mb
-               JOIN label_file lf ON lf.id = mb.label_id
-               WHERE lf.name = ? AND mb.block > 0 ORDER BY mb.block""",
-            (module.label_file,),
-        ).fetchall()
-        if not rows and module.part_number:
+        names = self._label_chain(module.label_file) or (
+            [module.part_number] if module.part_number else []
+        )
+        numbers: set[int] = set()
+        for name in names:
+            rows = connection.execute(
+                """SELECT DISTINCT mb.block FROM measuring_block mb
+                   JOIN label_file lf ON lf.id = mb.label_id
+                   WHERE lf.name = ? AND mb.block > 0 ORDER BY mb.block""",
+                (name,),
+            ).fetchall()
+            numbers.update(int(row["block"]) for row in rows)
+        if not numbers and module.part_number:
             rows = connection.execute(
                 """SELECT DISTINCT mb.block FROM measuring_block mb
                    JOIN label_file lf ON lf.id = mb.label_id
                    WHERE lf.part_number = ? AND mb.block > 0 ORDER BY mb.block""",
                 (module.part_number,),
             ).fetchall()
-        return [int(row["block"]) for row in rows]
+            numbers.update(int(row["block"]) for row in rows)
+        return sorted(numbers)
 
     def dtc_list(self, *, kind: str | None = None, limit: int = 500, search: str = "") -> list[dict]:
         connection = self.connect()

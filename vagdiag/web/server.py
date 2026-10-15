@@ -33,6 +33,11 @@ from .. import APP_NAME, APP_SUBTITLE, __version__, address_text
 from ..client import DiagnosticError, VehicleSession
 from ..db import Database
 from ..obd.scan import format_autoscan
+from ..proto.isotp import IsoTpError
+from ..proto.kw1281 import Kwp1281Error
+from ..proto.kwp2000 import Kwp2000Error
+from ..proto.uds import UdsError
+from ..proto.vwtp import VwtpError
 from ..sim.vehicles import load_vehicle
 
 __all__ = ["VagdiagServer", "run_server", "STATIC_DIR"]
@@ -116,18 +121,44 @@ class _AppState:
         return entries
 
     # -- Modulzugriff mit Wiederaufbau ------------------------------------- #
+    #: Fehler, nach denen ein neuer Dialogaufbau sinnvoll ist
+    RETRY_ERRORS = (
+        DiagnosticError,
+        Kwp1281Error,
+        Kwp2000Error,
+        UdsError,
+        IsoTpError,
+        VwtpError,
+        TimeoutError,
+        OSError,
+    )
+
     @contextmanager
     def with_module(self, address: int):
-        """Oeffnet ein Steuergeraet; bei abgelaufenem Dialog wird neu verbunden."""
+        """Oeffnet ein Steuergeraet; bei abgelaufenem Dialog wird neu verbunden.
+
+        Die Weboberflaeche arbeitet mit einer dauerhaften Fahrzeugsitzung,
+        waehrend der Fahrzustand weiterlaeuft. Steuergeraete beenden ihren
+        Dialog nach kurzer Untaetigkeit selbst - der Aufbau wird deshalb
+        einmal wiederholt, bevor ein Fehler an die Oberflaeche geht.
+        """
         with self.lock:
+            if self.session.module(address) is None:
+                # Nicht verbaute Adressen werden nicht wiederholt - der
+                # zweite Versuch scheitert garantiert genauso.
+                raise DiagnosticError(f"Adresse {address_text(address)} ist nicht verbaut")
             try:
                 module = self.session.open_module(address)
-            except (DiagnosticError, TimeoutError, OSError) as exc:
-                # Dialog abgelaufen (Steuergeraet wartet nicht endlos) -> neu aufbauen
+            except self.RETRY_ERRORS as exc:
                 self.session.close_module(address)
-                self.log(f"Verbindung zu 0x{address:02X} neu aufbauen ({exc})")
+                self.log(f"Dialog {address_text(address)} neu aufbauen ({exc})")
                 module = self.session.open_module(address)
-        yield module
+        try:
+            yield module
+        finally:
+            # Jede Anfrage schliesst ihren Dialog: sonst sammeln sich alte
+            # Kanaele am Bus an, die fremde Dialoge mitlesen und quittieren.
+            self.session.close_module(address)
 
     def scan(self) -> tuple[dict, str]:
         with self.lock:
@@ -377,6 +408,3 @@ def run_server(
         state.session.stop()
         httpd.server_close()
     return 0
-
-
-__all__ = ["VagdiagServer", "run_server", "load_vehicle", "STATIC_DIR"]

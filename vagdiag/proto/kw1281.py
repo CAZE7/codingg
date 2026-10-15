@@ -254,6 +254,7 @@ class Kwp1281Tester(KLineNode):
     def connect(self, ecu_address: int, *, timeout: float = 1.0) -> IdentResult:
         """5-Baud-Init, Keyword-Austausch und Identifikationsblock lesen."""
         self.counter = None
+        self.ident_result = None
         self.ecu_address = ecu_address
         self.protocol_version = self.bus.wakeup(self, ecu_address)
         # Keywords pruefen: 0x55 + Keyword-LSB + Keyword-MSB (siehe kw1281test, WakeUpNoRetry)
@@ -276,6 +277,9 @@ class Kwp1281Tester(KLineNode):
         self.connected = True
         blocks, _ = self._receive_blocks(timeout=timeout)
         ident = self._parse_ident(blocks)
+        # Ergebnis fuer die aufrufende Ebene bereithalten: Codierung und
+        # Werkstattcode kommen so aus dem Steuergeraet statt aus dem Bestand.
+        self.ident_result = ident
         # Fordert das Steuergeraet weitere Identdaten an, wird 0x00 nachgeschoben
         while any(b.title == BlockTitle.ASCII_DATA and b.body and b.body[0] > 0x7F for b in blocks):
             self.send_block(BlockTitle.READ_IDENT)
@@ -635,6 +639,9 @@ class Kwp1281EcuServer(KLineEcu):
             if not self._wakeup.wait(0.2):
                 continue
             self._wakeup.clear()
+            if not self._running:
+                # Aufwachen durch stop(): keinen Dialog mehr beginnen
+                break
             self.flush()
             try:
                 self._session()
@@ -675,13 +682,19 @@ class Kwp1281EcuServer(KLineEcu):
         if not self.write_response(items):
             return
 
+        # VCDS haelt den Dialog mit regelmaessigem Verkehr offen: bis zu
+        # ``idle_timeout`` Sekunden ohne Auftrag. Gelesen wird in kurzen
+        # Abschnitten, damit stop() nicht auf das Ende der Wartezeit warten muss.
+        idle_timeout = 30.0
+        deadline = time.monotonic() + idle_timeout
         while self._running:
             try:
-                # VCDS haelt den Dialog mit regelmaessigem Verkehr offen; hier
-                # bleibt er 30 s bestehen (danach hoert das SG wieder auf zu lauschen).
-                request = self.read_block(timeout=30.0)
+                request = self.read_block(timeout=0.25)
             except TimeoutError:
-                return
+                if not self._running or time.monotonic() >= deadline:
+                    return
+                continue
+            deadline = time.monotonic() + idle_timeout
             if request.title == BlockTitle.END:
                 self.log("KWP1281: Dialog beendet (0x06)")
                 return
@@ -857,10 +870,17 @@ class Kwp1281EcuServer(KLineEcu):
         return block
 
     def _expect_tester_ack(self, byte: int) -> None:
-        try:
-            self.expect_echo(byte, timeout=0.5)
-        except (TimeoutError, IOError) as exc:  # pragma: no cover - Simulation
-            self.log(f"KWP1281: Bytequittung fehlt: {exc}")
+        # In kurzen Abschnitten warten, damit ein stop() nicht bis zum Ablauf
+        # der Quittungszeit blockiert.
+        deadline = time.monotonic() + 0.5
+        while True:
+            try:
+                self.expect_echo(byte, timeout=0.05)
+                return
+            except (TimeoutError, IOError) as exc:  # pragma: no cover - Simulation
+                if not self._running or time.monotonic() >= deadline:
+                    self.log(f"KWP1281: Bytequittung fehlt: {exc}")
+                    return
 
     def read_block(self, timeout: float = 1.0) -> Block:
         raw = bytearray()

@@ -44,12 +44,78 @@
       "market": "EU",
       "notes": "Referenzfahrzeug für KWP1281 mit 5-Baud-Initialisierung.",
       "modules": [
-        { "address": 1,  "protocol": "KWP1281", "bus": "K-Line", "part_number": "038906018G", "component": "1.9l R4 EDC  G00SG  1087", "software": "1087", "coding": "00002", "wsc": "00000", "label_file": "038906018G.lbl", "dtc_set": "golf4_tdi" },
-        { "address": 3,  "protocol": "KWP1281", "bus": "K-Line", "part_number": "1J0907551AC", "component": "ABS/ESP   MK60  V1.1", "software": "V1.1", "coding": "0021505", "wsc": "00000", "label_file": "1J0907551AC.lbl", "dtc_set": "golf4_abs" },
-        { "address": 15, "protocol": "KWP1281", "bus": "K-Line", "part_number": "1J0909608B", "component": "AIRBAG VW5  0010", "software": "0010", "coding": "00066", "wsc": "00000", "label_file": "1J0909608B.lbl", "dtc_set": "golf4_airbag" },
-        { "address": 17, "protocol": "KWP1281", "bus": "K-Line", "part_number": "1J0919860B", "component": "KOMBI+WEGFAHRSP   VDO  V04", "software": "V04", "coding": "01102", "wsc": "00000", "label_file": "1J0919860B.lbl", "dtc_set": "golf4_kombi" },
-        { "address": 46, "protocol": "KWP1281", "bus": "K-Line", "part_number": "1J0959799AH", "component": "Komfortgerät HLO 1J0 959 799 AH", "software": "0001", "coding": "00259", "wsc": "00000", "label_file": "1J0959799.lbl", "dtc_set": "golf4_komfort" },
-        { "address": 8,  "protocol": "KWP1281", "bus": "K-Line", "part_number": "1J0820045F", "component": "Climatronic  1J0 820 045 F", "software": "0104", "coding": "00000", "wsc": "00000", "label_file": "1J0820045.lbl", "dtc_set": "golf4_klima" }
+        {
+          "address": 1,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "038906018G",
+          "component": "1.9l R4 EDC  G00SG  1087",
+          "software": "1087",
+          "coding": "00002",
+          "wsc": "00000",
+          "label_file": "038906018G.lbl",
+          "dtc_set": "golf4_tdi"
+        },
+        {
+          "address": 3,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "1J0907551AC",
+          "component": "ABS/ESP   MK60  V1.1",
+          "software": "V1.1",
+          "coding": "0021505",
+          "wsc": "00000",
+          "label_file": "1J0907551AC.lbl",
+          "dtc_set": "golf4_abs"
+        },
+        {
+          "address": 15,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "1J0909608B",
+          "component": "AIRBAG VW5  0010",
+          "software": "0010",
+          "coding": "00066",
+          "wsc": "00000",
+          "label_file": "1J0909608B.lbl",
+          "dtc_set": "golf4_airbag"
+        },
+        {
+          "address": 17,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "1J0919860B",
+          "component": "KOMBI+WEGFAHRSP   VDO  V04",
+          "software": "V04",
+          "coding": "01102",
+          "wsc": "00000",
+          "label_file": "1J0919860B.lbl",
+          "dtc_set": "golf4_kombi"
+        },
+        {
+          "address": 46,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "1J0959799AH",
+          "component": "Komfortgerät HLO 1J0 959 799 AH",
+          "software": "0001",
+          "coding": "00259",
+          "wsc": "00000",
+          "label_file": "1J0959799.lbl",
+          "dtc_set": "golf4_komfort"
+        },
+        {
+          "address": 8,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "1J0820045F",
+          "component": "Climatronic  1J0 820 045 F",
+          "software": "0104",
+          "coding": "00001",
+          "wsc": "00000",
+          "label_file": "1J0820045.lbl",
+          "dtc_set": "golf4_klima"
+        }
       ]
     },
     {
@@ -60,12 +126,78 @@
       "market": "EU",
       "notes": "Referenzfahrzeug für KWP2000 auf der K-Line mit CAN-Gateway.",
       "modules": [
-        { "address": 1,  "protocol": "KWP2000", "bus": "K-Line", "part_number": "038906019HJ", "component": "1.9l R4 EDC 0300SG  1078", "software": "1078", "coding": "00001", "wsc": "00000", "label_file": "038906019HJ.lbl", "dtc_set": "b55_tdi" },
-        { "address": 3,  "protocol": "KWP1281", "bus": "K-Line", "part_number": "3B0614517G", "component": "ABS/ESP  BOSCH  5.7", "software": "5.7", "coding": "04275", "wsc": "00000", "label_file": "1J0907551AC.lbl", "dtc_set": "b55_abs" },
-        { "address": 15, "protocol": "KWP2000", "bus": "K-Line", "part_number": "3B0959655F", "component": "AIRBAG VW5  0010", "software": "0010", "coding": "00066", "wsc": "00000", "label_file": "1J0909608B.lbl", "dtc_set": "b55_airbag" },
-        { "address": 17, "protocol": "KWP2000", "bus": "K-Line", "part_number": "3B0920806D", "component": "KOMBI+WEGFAHRS.  M73 V07", "software": "V07", "coding": "00042", "wsc": "00000", "label_file": "1J0919860B.lbl", "dtc_set": "b55_kombi" },
-        { "address": 19, "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "3B0907469E", "component": "Gateway  K-CAN  V1.0", "software": "V1.0", "coding": "00301", "wsc": "00000", "label_file": "3B0907469.lbl", "dtc_set": "b55_gateway" },
-        { "address": 56, "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "1J0035186C", "component": "Radio  BETA", "software": "0002", "coding": "00401", "wsc": "00000", "label_file": "1J0035186.lbl", "dtc_set": "b55_radio" }
+        {
+          "address": 1,
+          "protocol": "KWP2000",
+          "bus": "K-Line",
+          "part_number": "038906019HJ",
+          "component": "1.9l R4 EDC 0300SG  1078",
+          "software": "1078",
+          "coding": "00001",
+          "wsc": "00000",
+          "label_file": "038906019HJ.lbl",
+          "dtc_set": "b55_tdi"
+        },
+        {
+          "address": 3,
+          "protocol": "KWP1281",
+          "bus": "K-Line",
+          "part_number": "3B0614517G",
+          "component": "ABS/ESP  BOSCH  5.7",
+          "software": "5.7",
+          "coding": "04275",
+          "wsc": "00000",
+          "label_file": "1J0907551AC.lbl",
+          "dtc_set": "b55_abs"
+        },
+        {
+          "address": 15,
+          "protocol": "KWP2000",
+          "bus": "K-Line",
+          "part_number": "3B0959655F",
+          "component": "AIRBAG VW5  0010",
+          "software": "0010",
+          "coding": "00066",
+          "wsc": "00000",
+          "label_file": "1J0909608B.lbl",
+          "dtc_set": "b55_airbag"
+        },
+        {
+          "address": 17,
+          "protocol": "KWP2000",
+          "bus": "K-Line",
+          "part_number": "3B0920806D",
+          "component": "KOMBI+WEGFAHRS.  M73 V07",
+          "software": "V07",
+          "coding": "00042",
+          "wsc": "00000",
+          "label_file": "1J0919860B.lbl",
+          "dtc_set": "b55_kombi"
+        },
+        {
+          "address": 19,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "3B0907469E",
+          "component": "Gateway  K-CAN  V1.0",
+          "software": "V1.0",
+          "coding": "00301",
+          "wsc": "00000",
+          "label_file": "3B0907469.lbl",
+          "dtc_set": "b55_gateway"
+        },
+        {
+          "address": 56,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "1J0035186C",
+          "component": "Radio  BETA",
+          "software": "0002",
+          "coding": "00401",
+          "wsc": "00000",
+          "label_file": "1J0035186.lbl",
+          "dtc_set": "b55_radio"
+        }
       ]
     },
     {
@@ -76,12 +208,78 @@
       "market": "EU",
       "notes": "Durchgehende CAN-Diagnose über VW TP 2.0.",
       "modules": [
-        { "address": 1,  "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0909518AK", "component": "1.8l R4/5VT     G   0001", "software": "0001", "coding": "0016751", "wsc": "00000", "label_file": "8E0909518.lbl", "dtc_set": "a4b6_18t" },
-        { "address": 3,  "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0614517AA", "component": "ABS/ESP  BOSCH  5.7", "software": "5.7", "coding": "00215", "wsc": "00000", "label_file": "1J0907551AC.lbl", "dtc_set": "a4b6_abs" },
-        { "address": 8,  "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0820043AH", "component": "Klima  AUTO  V1.0", "software": "V1.0", "coding": "00000", "wsc": "00000", "label_file": "1J0820045.lbl", "dtc_set": "a4b6_klima" },
-        { "address": 15, "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0959655", "component": "AIRBAG VW5  0004", "software": "0004", "coding": "00066", "wsc": "00000", "label_file": "1J0909608B.lbl", "dtc_set": "a4b6_airbag" },
-        { "address": 17, "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0920900H", "component": "KOMBI+WEGFAHRS. RB8 V20", "software": "V20", "coding": "00042", "wsc": "00000", "label_file": "1J0919860B.lbl", "dtc_set": "a4b6_kombi" },
-        { "address": 46, "protocol": "KWP2000-on-CAN", "bus": "CAN", "part_number": "8E0959433AB", "component": "Komfortgerät   RB8", "software": "0001", "coding": "00041", "wsc": "00000", "label_file": "1J0959799.lbl", "dtc_set": "a4b6_komfort" }
+        {
+          "address": 1,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0909518AK",
+          "component": "1.8l R4/5VT     G   0001",
+          "software": "0001",
+          "coding": "0016751",
+          "wsc": "00000",
+          "label_file": "8E0909518.lbl",
+          "dtc_set": "a4b6_18t"
+        },
+        {
+          "address": 3,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0614517AA",
+          "component": "ABS/ESP  BOSCH  5.7",
+          "software": "5.7",
+          "coding": "00215",
+          "wsc": "00000",
+          "label_file": "1J0907551AC.lbl",
+          "dtc_set": "a4b6_abs"
+        },
+        {
+          "address": 8,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0820043AH",
+          "component": "Klima  AUTO  V1.0",
+          "software": "V1.0",
+          "coding": "00001",
+          "wsc": "00000",
+          "label_file": "1J0820045.lbl",
+          "dtc_set": "a4b6_klima"
+        },
+        {
+          "address": 15,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0959655",
+          "component": "AIRBAG VW5  0004",
+          "software": "0004",
+          "coding": "00066",
+          "wsc": "00000",
+          "label_file": "1J0909608B.lbl",
+          "dtc_set": "a4b6_airbag"
+        },
+        {
+          "address": 17,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0920900H",
+          "component": "KOMBI+WEGFAHRS. RB8 V20",
+          "software": "V20",
+          "coding": "00042",
+          "wsc": "00000",
+          "label_file": "1J0919860B.lbl",
+          "dtc_set": "a4b6_kombi"
+        },
+        {
+          "address": 46,
+          "protocol": "KWP2000-on-CAN",
+          "bus": "CAN",
+          "part_number": "8E0959433AB",
+          "component": "Komfortgerät   RB8",
+          "software": "0001",
+          "coding": "00041",
+          "wsc": "00000",
+          "label_file": "1J0959799.lbl",
+          "dtc_set": "a4b6_komfort"
+        }
       ]
     },
     {
@@ -92,13 +290,90 @@
       "market": "EU",
       "notes": "Referenzfahrzeug für UDS-Diagnose über VW TP 2.0.",
       "modules": [
-        { "address": 1,  "protocol": "UDS", "bus": "CAN", "part_number": "03G906016K", "component": "R4 2.0l EDC  G20SG", "software": "G20SG", "coding": "0000071", "wsc": "00000", "label_file": "03G906016.lbl", "dtc_set": "golf5_tdi" },
-        { "address": 3,  "protocol": "UDS", "bus": "CAN", "part_number": "1K0907379M", "component": "ESP MK60EC1   H30", "software": "H30", "coding": "0000000", "wsc": "00000", "label_file": "1J0907551AC.lbl", "dtc_set": "golf5_abs" },
-        { "address": 9,  "protocol": "UDS", "bus": "CAN", "part_number": "1K0937087", "component": "BCM  PQ35  H30", "software": "H30", "coding": "0000000", "wsc": "00000", "label_file": "1J0959799.lbl", "dtc_set": "golf5_bcm" },
-        { "address": 15, "protocol": "UDS", "bus": "CAN", "part_number": "1K0909605", "component": "AIRBAG VW8   H03", "software": "H03", "coding": "0000000", "wsc": "00000", "label_file": "1J0909608B.lbl", "dtc_set": "golf5_airbag" },
-        { "address": 17, "protocol": "UDS", "bus": "CAN", "part_number": "1K0920873", "component": "KOMBIINSTRUMENT  VDD  H06", "software": "H06", "coding": "0000000", "wsc": "00000", "label_file": "1J0919860B.lbl", "dtc_set": "golf5_kombi" },
-        { "address": 19, "protocol": "UDS", "bus": "CAN", "part_number": "1K0907530K", "component": "Gateway  PQ35  H04", "software": "H04", "coding": "0000000", "wsc": "00000", "label_file": "3B0907469.lbl", "dtc_set": "golf5_gateway" },
-        { "address": 44, "protocol": "UDS", "bus": "CAN", "part_number": "1K0909144", "component": "EPS  ZF  H01", "software": "H01", "coding": "0000000", "wsc": "00000", "label_file": "1K0909144.lbl", "dtc_set": "golf5_lenkhilfe" }
+        {
+          "address": 1,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "03G906016K",
+          "component": "R4 2.0l EDC  G20SG",
+          "software": "G20SG",
+          "coding": "0000071",
+          "wsc": "00000",
+          "label_file": "03G906016.lbl",
+          "dtc_set": "golf5_tdi"
+        },
+        {
+          "address": 3,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0907379M",
+          "component": "ESP MK60EC1   H30",
+          "software": "H30",
+          "coding": "0021505",
+          "wsc": "00000",
+          "label_file": "1J0907551AC.lbl",
+          "dtc_set": "golf5_abs"
+        },
+        {
+          "address": 9,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0937087",
+          "component": "BCM  PQ35  H30",
+          "software": "H30",
+          "coding": "00259",
+          "wsc": "00000",
+          "label_file": "1J0959799.lbl",
+          "dtc_set": "golf5_bcm"
+        },
+        {
+          "address": 15,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0909605",
+          "component": "AIRBAG VW8   H03",
+          "software": "H03",
+          "coding": "00066",
+          "wsc": "00000",
+          "label_file": "1J0909608B.lbl",
+          "dtc_set": "golf5_airbag"
+        },
+        {
+          "address": 17,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0920873",
+          "component": "KOMBIINSTRUMENT  VDD  H06",
+          "software": "H06",
+          "coding": "00042",
+          "wsc": "00000",
+          "label_file": "1J0919860B.lbl",
+          "dtc_set": "golf5_kombi"
+        },
+        {
+          "address": 19,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0907530K",
+          "component": "Gateway  PQ35  H04",
+          "software": "H04",
+          "coding": "00003",
+          "wsc": "00000",
+          "label_file": "3B0907469.lbl",
+          "dtc_set": "golf5_gateway"
+        },
+        {
+          "address": 44,
+          "protocol": "UDS",
+          "bus": "CAN",
+          "part_number": "1K0909144",
+          "component": "EPS  ZF  H01",
+          "software": "H01",
+          "coding": "00001",
+          "wsc": "00000",
+          "label_file": "1K0909144.lbl",
+          "dtc_set": "golf5_lenkhilfe"
+        }
       ]
     }
   ]

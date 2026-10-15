@@ -63,7 +63,10 @@ class SimulatedModule:
         self.log = log or (lambda text: "")
         self.role = role_for(module.address, module.dtc_set)
         self.groups: dict[int, Group] = {group.group: group for group in ROLES[self.role]}
-        self.coding_value = int(module.coding or 0) if str(module.coding or "0").isdigit() else 0
+        # Codierungen zeigt VCDS mit fuehrenden Nullen (5- bzw. 7-stellig); die
+        # Textform der Seed-Daten bleibt deshalb erhalten.
+        self.coding_text = (str(module.coding or "0").strip() or "0")
+        self.coding_value = int(self.coding_text) if self.coding_text.isdigit() else 0
         self.wsc = int(module.wsc or 0) if str(module.wsc or "0").isdigit() else 0
         self.faults: list[tuple[int | str, int]] = fault_set(module.dtc_set)
         self.adaptations: dict[int, int] = {}
@@ -117,10 +120,18 @@ class SimulatedModule:
     def coding(self) -> tuple[int, int]:
         return (self.coding_value, self.wsc)
 
-    def set_coding(self, coding: int, workshop_code: int) -> bool:
+    def set_coding(self, coding: int, workshop_code: int, *, text: str | None = None) -> bool:
         with self._lock:
             self.log(f"{self.info.name}: Codierung {coding:05d} (vorher {self.coding_value:05d})")
             self.coding_value = int(coding)
+            # Textform: ausdruecklich uebergebene Angabe gewinnt, sonst die
+            # bisherige Stellenzahl behalten (00002 bleibt 00002).
+            if text:
+                self.coding_text = text
+            elif len(self.coding_text) > len(str(int(coding))):
+                self.coding_text = str(int(coding)).rjust(len(self.coding_text), "0")
+            else:
+                self.coding_text = str(int(coding))
             self.wsc = int(workshop_code)
         return True
 
@@ -220,8 +231,8 @@ class SimulatedModule:
             return self._write_identifier(body, service, kwp=True)
         if service == 0x3B:  # WriteDataByLocalIdentifier (Codierung)
             coding_text = body[1:].decode("latin-1", errors="replace").strip("\x00 ")
-            digits = "".join(ch for ch in coding_text[:5] if ch.isdigit()) or "0"
-            self.set_coding(int(digits), self.wsc)
+            digits = "".join(ch for ch in coding_text[:7] if ch.isdigit()) or "0"
+            self.set_coding(int(digits), self.wsc, text=digits)
             return bytes([0x7B, body[0] if body else 0x00]) + bytes([0x01])
         if service == 0x30:  # InputOutputControlByLocalIdentifier
             if len(body) < 3:
@@ -353,7 +364,7 @@ class SimulatedModule:
         if identifier == 0xF19E:
             return values["serial"].encode("latin-1")
         if identifier in (0xF1A0, 0xF1):
-            return f"{self.coding_value}".encode("latin-1")
+            return self.coding_text.encode("latin-1")
         if identifier == 0xF15A:
             return self.info.part_number.encode("latin-1")
         if 0xF400 <= identifier <= 0xF4FF:  # Messwerteblock (VAG-Konvention)
@@ -381,8 +392,8 @@ class SimulatedModule:
         response_service = 0x7B if kwp else 0x6E
         if identifier in (0xF1A0, 0xF1):
             text = value.decode("latin-1", errors="replace").strip("\x00 ")
-            digits = "".join(ch for ch in text[:5] if ch.isdigit()) or "0"
-            self.set_coding(int(digits), self.wsc)
+            digits = "".join(ch for ch in text[:7] if ch.isdigit()) or "0"
+            self.set_coding(int(digits), self.wsc, text=digits)
             return bytes([response_service, body[0], body[1]])
         if 0xF500 <= identifier <= 0xF5FF:
             channel = identifier & 0xFF

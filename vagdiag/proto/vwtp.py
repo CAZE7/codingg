@@ -402,9 +402,14 @@ class VwtpChannel(CanNode):
         self.comm_setup = comm_setup
         self.log: list[str] = []
 
-    # Der Tester empfaengt alle IDs und filtert in der Software
     def accept_ids(self):
-        return None
+        """Nur der eigene Dialog: Tester-ID und die ID des angesprochenen SG.
+
+        Ohne Filter wuerde jeder alte Kanal fremde Dialoge mitlesen und
+        quittieren - das Stoergeraet "sieht" dann Quittungen, die nicht zu
+        seiner Uebertragung gehoeren.
+        """
+        return {BROADCAST_ID + self.endpoint.tester_addr, BROADCAST_ID + self.endpoint.ecu_addr}
 
     # -- Aufbau ------------------------------------------------------------- #
     def open(self) -> None:

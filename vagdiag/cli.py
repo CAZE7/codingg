@@ -121,6 +121,45 @@ def cmd_db_stats(args) -> int:
     return 0
 
 
+def cmd_db_check(args) -> int:
+    database = Database(args.db)
+    findings = database.check()
+    errors = [finding for finding in findings if finding["level"] == "fehler"]
+    warnings = [finding for finding in findings if finding["level"] != "fehler"]
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "database": str(database.path),
+                    "errors": len(errors),
+                    "warnings": len(warnings),
+                    "findings": findings,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+        return 1 if errors else 0
+    _print_header(f"{APP_NAME} - Datenbankpruefung")
+    print(f"Datei   : {database.path}")
+    print(f"Befunde : {len(errors)} Fehler, {len(warnings)} Warnungen")
+    print()
+    if not findings:
+        print(
+            "Keine Beanstandungen: Adressen, Labeldateien, Messwerte, Codier- und\n"
+            "Anpassungshilfen sowie Fehlercodes sind vollstaendig und stimmig."
+        )
+        return 0
+    for title, group in (("Fehler", errors), ("Warnungen", warnings)):
+        if not group:
+            continue
+        print(f"{title}:")
+        for finding in group:
+            print(f"   {finding['scope'][:56]:<56} {finding['message']}")
+        print()
+    return 1 if errors else 0
+
+
 def cmd_vehicles(args) -> int:
     database = Database(args.db)
     vehicles = database.vehicles()
@@ -491,6 +530,11 @@ def build_parser() -> argparse.ArgumentParser:
     stats = db_sub.add_parser("stats", parents=[common], help="Kennzahlen anzeigen")
     stats.add_argument("--json", action="store_true")
     stats.set_defaults(func=cmd_db_stats)
+    check = db_sub.add_parser(
+        "check", parents=[common], help="Adressen, Labeldateien und Fehlercodes pruefen"
+    )
+    check.add_argument("--json", action="store_true")
+    check.set_defaults(func=cmd_db_check)
 
     vehicles = sub.add_parser(
         "vehicles", parents=[common], help="Fahrzeuge und Steuergeraete auflisten"
