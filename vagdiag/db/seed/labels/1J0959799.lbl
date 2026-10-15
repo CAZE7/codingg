@@ -1,0 +1,46 @@
+; 1J0-959-799.lbl
+; Komfortsteuergeraet / Bordnetzsteuergeraet (Zentralverriegelung)
+
+:001,0
+001,0,Zentralverriegelung
+001,1,Fahrertür,?,offen/geschlossen,0,1
+001,2,Beifahrertür,?,offen/geschlossen,0,1
+001,3,Hintertür links,?,offen/geschlossen,0,1
+001,4,Hintertür rechts,?,offen/geschlossen,0,1
+
+:002,0
+002,0,Funkfernbedienung
+002,1,Taste Öffnen,?,betätigt,0,1
+002,2,Taste Schließen,?,betätigt,0,1
+002,3,Taste Kofferraum,?,betätigt,0,1
+002,4,Schlüsselnummer,?,1-4,0,4
+
+:003,0
+003,0,Diebstahlwarnanlage
+003,1,DWA aktiv,?,ja/nein,0,1
+003,2,Innenraumüberwachung,?,aktiv,0,1
+003,3,Alarmauslösungen,?,Zähler,0,255
+003,4,Alarmursache,?,Code,0,16
+
+:004,0
+004,0,Fensterheber
+004,1,Fensterheber Fahrer,?,0-100 %,0,100
+004,2,Fensterheber Beifahrer,?,0-100 %,0,100
+004,3,Komfortschließen,?,aktiv,0,1
+004,4,Blockierschutz,?,aktiv,0,1
+
+C00,Codierung Komfortsystem
+C01,1,1,Zentralverriegelung
+C01,2,2,Funkfernbedienung
+C01,3,4,Diebstahlwarnanlage
+C01,4,8,Alarmanlage mit Innenraumüberwachung
+L03,Adaption Automatisches Verriegeln ab 15 km/h
+L04,Adaption Akustische Quittierung beim Schließen
+L05,Adaption Komfortschließen über Funk
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Innenraumbeleuchtung
+A002,2,Zentralverriegelung (Ver-/Entriegeln)
+A003,3,Kofferraum-/Heckklappenentriegelung
+A004,4,Wisch-Wasch-Anlage
+A005,5,Hupe

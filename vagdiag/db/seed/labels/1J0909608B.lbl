@@ -1,0 +1,33 @@
+; 1J0-909-608-B.lbl
+; Airbag VW5 (Golf IV, Bora, Passat)
+
+:001,0
+001,0,Airbag-System Front
+001,1,Zündkreis Fahrerairbag,N95,Widerstand,1.8,2.6
+001,2,Zündkreis Beifahrerairbag,N131,Widerstand,1.8,2.6
+001,3,Zündkreis Fahrergurtstraffer,N153,Widerstand,1.8,2.6
+001,4,Zündkreis Beifahrergurtstraffer,N154,Widerstand,1.8,2.6
+
+:002,0
+002,0,Seitenairbags
+002,1,Seitenairbag Fahrer,N199,Widerstand,1.8,2.6
+002,2,Seitenairbag Beifahrer,N200,Widerstand,1.8,2.6
+002,3,Kopfairbag Fahrer,?,Widerstand,1.8,2.6
+002,4,Kopfairbag Beifahrer,?,Widerstand,1.8,2.6
+
+:003,0
+003,0,Systemzustand
+003,1,Bordspannung,?,V,10,15
+003,2,Airbag-Warnleuchte,K75,0/1,0,1
+003,3,Crash-Auslösung,?,ja/nein,0,1
+003,4,Anzahl Auslösungen,?,Zähler,0,255
+
+C00,Codierung Airbag
+C01,0,Kein Airbag
+C01,1,2-Airbag Fahrer/Beifahrer
+C01,2,4-Airbag mit Seitenairbags
+C01,3,6-Airbag mit Kopfairbags
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Airbag-Warnleuchte
+A002,2,Beifahrer-Airbag Abschaltung (Leuchte)

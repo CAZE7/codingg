@@ -1,0 +1,25 @@
+; 1J0-035-186.lbl
+; Radio BETA / GAMMA
+
+:001,0
+001,0,Radio-Status
+001,1,Klemme 30,?,V,10,15
+001,2,Klemme 15,?,ein/aus,0,1
+001,3,Diebstahlschutz,?,aktiv/frei,0,1
+001,4,Senderspeicher,?,Anzahl,0,30
+
+:002,0
+002,0,Tuner
+002,1,Frequenz,?,MHz,87,108
+002,2,Empfangspegel,?,dBµV,0,80
+002,3,Stereo,?,ja/nein,0,1
+002,4,RDS,?,ja/nein,0,1
+
+C00,Codierung Radio
+C01,1,1,Soundsystem
+C01,2,2,Navigation
+C01,4,4,Telefon-Stummschaltung
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kofferraumbeleuchtung
+A002,2,Heckklappenverriegelung

@@ -1,0 +1,44 @@
+; 1J0-919-860-B.lbl
+; Schalttafeleinsatz / Kombiinstrument (VDO)
+
+:001,0
+001,0,Kombiinstrument Basis
+001,1,Motordrehzahl,?,1/min,0,7000
+001,2,Geschwindigkeit,?,km/h,0,250
+001,3,Kühlmitteltemperatur,?,°C,50,120
+001,4,Tankfüllstand,?,l,0,55
+
+:002,0
+002,0,Bordnetz
+002,1,Bordspannung,?,V,10,15
+002,2,Außentemperatur,?,°C,-40,50
+002,3,Öldruck-Warnung,?,0/1,0,1
+002,4,Kraftstoffwarnung,?,0/1,0,1
+
+:003,0
+003,0,Betriebsstunden und Wegstrecke
+003,1,Kilometerstand,?,km,0,999999
+003,2,Tageskilometerzähler,?,km,0,9999
+003,3,Betriebsstunden,?,h,0,99999
+003,4,Ölwechselintervall,?,km,0,15000
+
+:004,0
+004,0,Wegfahrsperre
+004,1,WFS-Status,?,gesperrt/frei,0,1
+004,2,Schlüsselnummer,?,1-8,0,8
+004,3,Anzahl gespeicherte Schlüssel,?,Anzahl,0,8
+004,4,Startfreigabe,?,ja/nein,0,1
+
+B002,0,Grundeinstellung Servicerückstellung
+C00,Codierung Kombiinstrument
+C01,1,1,Länderkennung Europa
+C01,2,3,Länderkennung USA
+L02,Adaption Servicerückstellung
+L03,Adaption Wegstreckenimpuls
+L50,Adaption Wegfahrsperre
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kontrollleuchten Kombiinstrument
+A002,2,Zeigerinstrumente (Anschlag)
+A003,3,Signalton / Gong
+A004,4,Wegfahrsperren-Warnleuchte

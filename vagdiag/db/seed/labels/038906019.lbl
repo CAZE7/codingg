@@ -1,0 +1,31 @@
+; 038-906-019.lbl
+; 1.9l TDI AVB (Pumpe-Düse, KWP2000)
+
+:001,0
+001,0,Einspritzmenge
+001,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+001,2,Einspritzmenge,?,mg/Hub,3.0,60.0
+001,3,Einspritzdauer,?,ms,0.2,1.5
+001,4,Kühlmitteltemperatur,?,°C,-40,120
+
+:003,0
+003,0,Abgasrückführung
+003,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+003,2,Luftmasse (Ist),?,mg/Hub,200,900
+003,3,AGR-Ventil Ansteuerung,?,%,0,100
+003,4,AGR-Ventil Stellung,?,%,0,100
+
+:011,0
+011,0,Ladedruckregelung
+011,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+011,2,Ladedruck (Soll),?,mbar,900,2200
+011,3,Ladedruck (Ist),?,mbar,900,2200
+011,4,N75-Ansteuerung,?,%,0,100
+
+C00,Codierung Motorsteuergerät
+L03,Adaption AGR-Menge
+L04,Adaption Förderbeginn
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Kühlerlüfter
+A002,2,AGR-Ventil (N18)

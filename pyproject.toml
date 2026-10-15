@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vagdiag"
+version = "0.1.0"
+description = "VAGDiag Studio - quelloffener VCDS-Nachbau (VW/Audi/Seat/Skoda Diagnose) mit Steuergeraete-Datenbank, Label-Dateien und Fahrzeug-Simulator"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "codingg" }]
+keywords = ["vcds", "vag", "obd", "kwp1281", "kwp2000", "uds", "diagnose", "vw", "audi"]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+vagdiag = "vagdiag.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["vagdiag*"]
+
+[tool.setuptools.package-data]
+vagdiag = ["db/*.sql", "db/seed/*.json", "db/seed/labels/*.lbl", "db/seed/labels/*.redir", "web/static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

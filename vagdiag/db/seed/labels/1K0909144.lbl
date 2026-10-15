@@ -1,0 +1,30 @@
+; 1K0-909-144.lbl
+; Elektromechanische Servolenkung (EPS)
+
+:001,0
+001,0,Lenkhilfe Basiswerte
+001,1,Motordrehzahl,?,1/min,0,7000
+001,2,Fahrgeschwindigkeit,?,km/h,0,250
+001,3,Lenkmoment,?,Nm,-10,10
+001,4,Lenkwinkel,?,(°),-540,540
+
+:002,0
+002,0,Unterstützung
+002,1,Unterstützungsmoment (Ist),?,Nm,0,60
+002,2,Unterstützungsmoment (Soll),?,Nm,0,60
+002,3,Motordrehzahl E-Motor,?,1/min,0,6000
+002,4,Motorstrom,?,A,0,80
+
+:003,0
+003,0,Systemzustand
+003,1,Bordspannung,?,V,10,15
+003,2,Temperatur Steuergerät,?,°C,-40,150
+003,3,Lenkwinkelsensor,?,kalibriert,0,1
+003,4,Störungsanzeige,?,0=ok 1=Störung,0,1
+
+B001,0,Grundeinstellung Endanschlag (Lenkwinkel)
+C00,Codierung Lenkhilfe
+
+; --- Stellglieddiagnose (Output Test, A-Eintraege) ---
+A001,1,Lenkhilfe-Warnleuchte
+A002,2,elektrischer Lenkungsmotor (Pulsbetrieb)

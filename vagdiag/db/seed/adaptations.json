@@ -1,0 +1,170 @@
+{
+  "note": "Anpassungskanaele (Adaptionswerte) der Simulationssteuergeraete. Aufbau und Wertebereich orientieren sich an den in der Community dokumentierten Kanaelen der jeweiligen Steuergeraetegeneration (VCDS 'Anpassung' zeigt Kanalnummer und 16-Bit-Wert).",
+  "source": "Community-Dokumentation VCDS-Anpassungskanaele, Reparaturleitfäden",
+  "channels": [
+    {
+      "label_file": "038906018G.lbl",
+      "address": 1,
+      "channel": 3,
+      "text": "Abgasrückführung (AGR-Menge)",
+      "min": 32768,
+      "max": 33400,
+      "unit": "Rohwert"
+    },
+    {
+      "label_file": "038906018G.lbl",
+      "address": 1,
+      "channel": 4,
+      "text": "Einspritzbeginn (Förderbeginn)",
+      "min": 32000,
+      "max": 33500,
+      "unit": "Rohwert"
+    },
+    {
+      "label_file": "038906018G.lbl",
+      "address": 1,
+      "channel": 5,
+      "text": "Leerlaufdrehzahl",
+      "min": 32700,
+      "max": 32900,
+      "unit": "Rohwert"
+    },
+    {
+      "label_file": "038906019.lbl",
+      "address": 1,
+      "channel": 3,
+      "text": "AGR-Menge (Pumpe-Düse)",
+      "min": 32768,
+      "max": 33400,
+      "unit": "Rohwert"
+    },
+    {
+      "label_file": "038906019.lbl",
+      "address": 1,
+      "channel": 4,
+      "text": "Förderbeginn-Korrektur",
+      "min": 32000,
+      "max": 33500,
+      "unit": "Rohwert"
+    },
+    {
+      "label_file": "03G906016.lbl",
+      "address": 1,
+      "channel": 1,
+      "text": "Leerlaufdrehzahl",
+      "min": 800,
+      "max": 950,
+      "unit": "1/min"
+    },
+    {
+      "label_file": "03G906016.lbl",
+      "address": 1,
+      "channel": 2,
+      "text": "Dieselpartikelfilter: Regenerationsschwelle",
+      "min": 0,
+      "max": 100,
+      "unit": "%"
+    },
+    {
+      "label_file": "1J0919860B.lbl",
+      "address": 17,
+      "channel": 2,
+      "text": "Servicerückstellung (Intervall)",
+      "min": 0,
+      "max": 4,
+      "unit": "Stufe"
+    },
+    {
+      "label_file": "1J0919860B.lbl",
+      "address": 17,
+      "channel": 3,
+      "text": "Wegstreckenimpuls (K-Zahl)",
+      "min": 2000,
+      "max": 5000,
+      "unit": "Impulse/km"
+    },
+    {
+      "label_file": "1J0919860B.lbl",
+      "address": 17,
+      "channel": 50,
+      "text": "Wegfahrsperre – Lernwerte",
+      "min": 0,
+      "max": 1,
+      "unit": "0/1"
+    },
+    {
+      "label_file": "1J0959799.lbl",
+      "address": 46,
+      "channel": 3,
+      "text": "Automatisches Verriegeln ab 15 km/h",
+      "min": 0,
+      "max": 1,
+      "unit": "0/1"
+    },
+    {
+      "label_file": "1J0959799.lbl",
+      "address": 46,
+      "channel": 4,
+      "text": "Akustische Quittierung beim Verriegeln",
+      "min": 0,
+      "max": 1,
+      "unit": "0/1"
+    },
+    {
+      "label_file": "1J0959799.lbl",
+      "address": 46,
+      "channel": 5,
+      "text": "Komfortschließen über Funk",
+      "min": 0,
+      "max": 1,
+      "unit": "0/1"
+    },
+    {
+      "label_file": "1J0907551AC.lbl",
+      "address": 3,
+      "channel": 1,
+      "text": "Reifenumfang (Kodierung)",
+      "min": 0,
+      "max": 7,
+      "unit": "Stufe"
+    },
+    {
+      "label_file": "1J0820045.lbl",
+      "address": 8,
+      "channel": 1,
+      "text": "Temperaturkennlinie Klimaanlage",
+      "min": 0,
+      "max": 100,
+      "unit": "%"
+    },
+    {
+      "label_file": "1K0909144.lbl",
+      "address": 44,
+      "channel": 1,
+      "text": "Endanschlag-Lernwerte Lenkwinkel",
+      "min": 0,
+      "max": 1,
+      "unit": "0/1"
+    },
+    {
+      "label_file": "8E0909518.lbl",
+      "address": 1,
+      "channel": 1,
+      "text": "Leerlaufdrehzahl Sollwert",
+      "min": 780,
+      "max": 900,
+      "unit": "1/min",
+      "source": "VCDS-Anpassungshilfen (Beispiel)"
+    },
+    {
+      "label_file": "8E0909518.lbl",
+      "address": 1,
+      "channel": 3,
+      "text": "Gemischabgleich Leerlauf (Rohwert)",
+      "min": 0,
+      "max": 255,
+      "unit": "Rohwert",
+      "source": "VCDS-Anpassungshilfen (Beispiel)"
+    }
+  ]
+}
