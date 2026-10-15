@@ -135,12 +135,13 @@ class _AppState:
 
     @contextmanager
     def with_module(self, address: int):
-        """Oeffnet ein Steuergeraet; bei abgelaufenem Dialog wird neu verbunden.
+        """Oeffnet ein Steuergeraet fuer die Dauer einer Anfrage.
 
         Die Weboberflaeche arbeitet mit einer dauerhaften Fahrzeugsitzung,
         waehrend der Fahrzustand weiterlaeuft. Steuergeraete beenden ihren
         Dialog nach kurzer Untaetigkeit selbst - der Aufbau wird deshalb
-        einmal wiederholt, bevor ein Fehler an die Oberflaeche geht.
+        einmal wiederholt, bevor ein Fehler an die Oberflaeche geht. Nach der
+        Anfrage wird der Dialog geschlossen, damit kein Kanal am Bus bleibt.
         """
         with self.lock:
             if self.session.module(address) is None:
