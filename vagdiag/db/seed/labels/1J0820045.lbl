@@ -1,0 +1,29 @@
+; 1J0-820-045.lbl
+; Climatronic (Klima-/Heizungselektronik)
+
+:001,0
+001,0,Klimaanlage Grundwerte
+001,1,Innenraumtemperatur,?,°C,-10,60
+001,2,Außentemperatur,?,°C,-40,60
+001,3,Verdampfertemperatur,?,°C,-10,30
+001,4,Kühlmitteltemperatur,?,°C,50,120
+
+:002,0
+002,0,Kompressor und Lüfter
+002,1,Kompressorstatus,?,ein/aus,0,1
+002,2,Kältemitteldruck,?,bar,0,25
+002,3,Lüfterstufe,?,1-7,0,7
+002,4,Gebläsespannung,?,V,0,12
+
+:003,0
+003,0,Stellmotoren
+003,1,Stellmotor Temperaturklappe,?,%,0,100
+003,2,Stellmotor Luftverteilung,?,%,0,100
+003,3,Stellmotor Umluftklappe,?,%,0,100
+003,4,Stellmotor Frischluftklappe,?,%,0,100
+
+B001,0,Grundeinstellung Stellmotoren
+C00,Codierung Klimaanlage
+C01,1,1,Linkslenker
+C01,2,2,Rechtslenker
+L01,Adaption Temperaturkennlinie

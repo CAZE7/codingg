@@ -1,0 +1,351 @@
+{
+  "note": "VAG-Fehlercodes der KWP1281-Generation (5-stellig) und ausgewaehlte P-Codes der 16xxx-Reihe. Bei 16xxx-Codes gilt die belegte Umrechnung P = VAG - 16384 (Beispiele: 16804 -> P0420, 16795 -> P0411, 16514 -> P0130). Codes ausserhalb dieses Bereichs erhalten bewusst kein SAE-Feld, solange keine belegte Zuordnung vorliegt.",
+  "source": "VCDS-Fehlercodelisten (Ross-Tech), VAG-Reparaturleitfaeden, oeffentliche VCDS-Autoscan-Auswertungen",
+  "codes": [
+    {
+      "vag": 575,
+      "text": "Saugrohrdruck – Regelgrenze überschritten",
+      "short": "Ladedruck zu hoch",
+      "system": "Motor",
+      "status_hint": "Häufig N75 / Ladedruckregelung prüfen"
+    },
+    {
+      "vag": 522,
+      "text": "Geber für Kühlmitteltemperatur G62 – Signal unplausibel",
+      "short": "Kühlmittelgeber",
+      "system": "Motor"
+    },
+    {
+      "vag": 523,
+      "text": "Geber für Ansauglufttemperatur G42 – Signal unplausibel",
+      "short": "Ansaugluftgeber",
+      "system": "Motor"
+    },
+    {
+      "vag": 525,
+      "text": "Lambdasonde G39 – Signal unplausibel",
+      "short": "Lambdasonde",
+      "system": "Motor"
+    },
+    {
+      "vag": 537,
+      "text": "Lambda-Regelung – Regelgrenze überschritten (Bank 1)",
+      "short": "Gemisch zu mager/fett",
+      "system": "Motor"
+    },
+    {
+      "vag": 542,
+      "text": "Geber für Nadelhub G80 – Signal unplausibel",
+      "short": "Nadelhubsensor",
+      "system": "Motor"
+    },
+    {
+      "vag": 550,
+      "text": "Beginn der Einspritzung – Regelabweichung",
+      "short": "Förderbeginn",
+      "system": "Motor"
+    },
+    {
+      "vag": 553,
+      "text": "Luftmassenmesser G70 – Signal zu klein / Unterbrechung",
+      "short": "LMM-Signal",
+      "system": "Motor"
+    },
+    {
+      "vag": 559,
+      "text": "Relais für Kraftstoffpumpe J17 – Spannungsversorgung",
+      "short": "Kraftstoffpumpenrelais",
+      "system": "Motor"
+    },
+    {
+      "vag": 532,
+      "text": "Versorgungsspannung – Signal zu klein",
+      "short": "Unterspannung",
+      "system": "Elektrik"
+    },
+    {
+      "vag": 513,
+      "text": "Geber für Motordrehzahl G28 – kein Signal",
+      "short": "Drehzahlsensor",
+      "system": "Motor"
+    },
+    {
+      "vag": 518,
+      "text": "Geber für Drosselklappenstellung G69 – Signal unplausibel",
+      "short": "Drosselklappengeber",
+      "system": "Motor"
+    },
+    {
+      "vag": 519,
+      "text": "Geber für Saugrohrdruck G71 – Signal unplausibel",
+      "short": "Saugrohrdruckgeber",
+      "system": "Motor"
+    },
+    {
+      "vag": 520,
+      "text": "Luftmengen-/Luftmassenmesser G70 – Signal unplausibel",
+      "short": "LMM unplausibel",
+      "system": "Motor"
+    },
+    {
+      "vag": 524,
+      "text": "Klopfsensor 1 G61 – Signal unplausibel",
+      "short": "Klopfsensor",
+      "system": "Motor"
+    },
+    {
+      "vag": 515,
+      "text": "Hallgeber G40 – Signal unplausibel",
+      "short": "Hallgeber",
+      "system": "Motor"
+    },
+    {
+      "vag": 1262,
+      "text": "Magnetventil für Ladedruckbegrenzung N75 – Unterbrechung/Kurzschluss",
+      "short": "N75",
+      "system": "Motor"
+    },
+    {
+      "vag": 1259,
+      "text": "Relais für Kraftstoffpumpe J17 – Unterbrechung",
+      "short": "Kraftstoffpumpenrelais",
+      "system": "Motor"
+    },
+    {
+      "vag": 668,
+      "text": "Klemme 30 – Spannungsversorgung unplausibel",
+      "short": "Klemme 30",
+      "system": "Elektrik"
+    },
+    {
+      "vag": 779,
+      "text": "Geber für Außentemperatur G17 – Signal unplausibel",
+      "short": "Außentemperaturgeber",
+      "system": "Komfort"
+    },
+    {
+      "vag": 1128,
+      "text": "Steuergerät für Wegfahrsperre – Signal unplausibel",
+      "short": "WFS-Signal",
+      "system": "Wegfahrsperre"
+    },
+    {
+      "vag": 1176,
+      "text": "Schlüssel – Signal zu klein (Wegfahrsperre)",
+      "short": "Transponder",
+      "system": "Wegfahrsperre"
+    },
+    {
+      "vag": 1044,
+      "text": "Steuergerät falsch codiert",
+      "short": "Codierung fehlt/falsch",
+      "system": "Elektrik"
+    },
+    {
+      "vag": 1314,
+      "text": "Motorsteuergerät – keine Kommunikation",
+      "short": "CAN-Kommunikation",
+      "system": "Datenbus"
+    },
+    {
+      "vag": 1315,
+      "text": "Getriebesteuergerät – keine Kommunikation",
+      "short": "CAN-Kommunikation",
+      "system": "Datenbus"
+    },
+    {
+      "vag": 1316,
+      "text": "ABS-Steuergerät – keine Kommunikation",
+      "short": "CAN-Kommunikation",
+      "system": "Datenbus"
+    },
+    {
+      "vag": 1317,
+      "text": "Steuergerät im Schalttafeleinsatz J285 – keine Kommunikation",
+      "short": "KI-Kommunikation",
+      "system": "Datenbus"
+    },
+    {
+      "vag": 1320,
+      "text": "Steuergerät für Climatronic J255 – keine Kommunikation",
+      "short": "Klima-Kommunikation",
+      "system": "Datenbus"
+    },
+    {
+      "vag": 283,
+      "text": "ABS-Drehzahlsensor vorne links G47 – Signal unplausibel",
+      "short": "Raddrehzahl VL",
+      "system": "ABS"
+    },
+    {
+      "vag": 285,
+      "text": "ABS-Drehzahlsensor vorne rechts G45 – Signal unplausibel",
+      "short": "Raddrehzahl VR",
+      "system": "ABS"
+    },
+    {
+      "vag": 287,
+      "text": "ABS-Drehzahlsensor hinten rechts G44 – Signal unplausibel",
+      "short": "Raddrehzahl HR",
+      "system": "ABS"
+    },
+    {
+      "vag": 290,
+      "text": "ABS-Drehzahlsensor hinten links G46 – Signal unplausibel",
+      "short": "Raddrehzahl HL",
+      "system": "ABS"
+    },
+    {
+      "vag": 526,
+      "text": "Bremslichtschalter F – Signal unplausibel",
+      "short": "Bremslichtschalter",
+      "system": "ABS"
+    },
+    {
+      "vag": 1276,
+      "text": "ABS-Hydraulikpumpe V64 – Unterbrechung/Kurzschluss",
+      "short": "ABS-Pumpe",
+      "system": "ABS"
+    },
+    {
+      "vag": 1130,
+      "text": "ABS-Betrieb – unplausibles Signal",
+      "short": "ABS-Signal",
+      "system": "ABS"
+    },
+    {
+      "vag": 588,
+      "text": "Zünder Fahrerairbag N95 – Widerstand zu groß",
+      "short": "Airbag-Zünder Fahrer",
+      "system": "Airbag"
+    },
+    {
+      "vag": 589,
+      "text": "Zünder Beifahrerairbag N131 – Widerstand zu groß",
+      "short": "Airbag-Zünder Beifahrer",
+      "system": "Airbag"
+    },
+    {
+      "vag": 654,
+      "text": "Zünder für Gurtstraffer Fahrerseite N153 – Widerstand zu groß",
+      "short": "Gurtstraffer Fahrer",
+      "system": "Airbag"
+    },
+    {
+      "vag": 1221,
+      "text": "Seitenairbag-Zünder Fahrerseite N199 – Widerstand zu groß",
+      "short": "Seitenairbag Fahrer",
+      "system": "Airbag"
+    },
+    {
+      "vag": 655,
+      "text": "Airbag-Warnleuchte K75 – Unterbrechung",
+      "short": "Airbag-Leuchte",
+      "system": "Airbag"
+    },
+    {
+      "vag": 591,
+      "text": "Steuergerät für Airbag – falsch codiert",
+      "short": "Airbag-Codierung",
+      "system": "Airbag"
+    },
+    {
+      "vag": 2815,
+      "text": "Bedienteil Klimaanlage – Signal unplausibel",
+      "short": "Klimabedienteil",
+      "system": "Komfort"
+    },
+    {
+      "vag": 65535,
+      "text": "Keine Fehlercodes gespeichert",
+      "short": "Fehlerspeicher leer",
+      "system": "Allgemein"
+    }
+  ],
+  "vag16_codes": [
+    {
+      "vag": 16514,
+      "sae": "P0130",
+      "text": "Lambdasonde Bank 1 Sonde 1 – Fehlfunktion im Stromkreis",
+      "system": "Motor"
+    },
+    {
+      "vag": 16518,
+      "sae": "P0134",
+      "text": "Lambdasonde Bank 1 Sonde 1 – keine Aktivität",
+      "system": "Motor"
+    },
+    {
+      "vag": 16524,
+      "sae": "P0140",
+      "text": "Lambdasonde Bank 1 Sonde 2 – keine Aktivität",
+      "system": "Motor"
+    },
+    {
+      "vag": 16683,
+      "sae": "P0299",
+      "text": "Ladedruckregelung – Regelgrenze unterschritten (Ladedruck zu gering)",
+      "system": "Motor"
+    },
+    {
+      "vag": 16684,
+      "sae": "P0300",
+      "text": "Zündaussetzer erkannt",
+      "system": "Motor"
+    },
+    {
+      "vag": 16685,
+      "sae": "P0301",
+      "text": "Zylinder 1 – Zündaussetzer erkannt",
+      "system": "Motor"
+    },
+    {
+      "vag": 16686,
+      "sae": "P0302",
+      "text": "Zylinder 2 – Zündaussetzer erkannt",
+      "system": "Motor"
+    },
+    {
+      "vag": 16687,
+      "sae": "P0303",
+      "text": "Zylinder 3 – Zündaussetzer erkannt",
+      "system": "Motor"
+    },
+    {
+      "vag": 16688,
+      "sae": "P0304",
+      "text": "Zylinder 4 – Zündaussetzer erkannt",
+      "system": "Motor"
+    },
+    {
+      "vag": 16795,
+      "sae": "P0411",
+      "text": "Sekundärluftsystem – Durchfluss falsch",
+      "system": "Motor"
+    },
+    {
+      "vag": 16804,
+      "sae": "P0420",
+      "text": "Katalysator Bank 1 – Wirkungsgrad zu gering",
+      "system": "Motor"
+    },
+    {
+      "vag": 16825,
+      "sae": "P0441",
+      "text": "Kraftstoffdampf-Rückhaltesystem – Durchfluss falsch",
+      "system": "Motor"
+    },
+    {
+      "vag": 17511,
+      "sae": "P1127",
+      "text": "Gemischaufbereitung Bank 1 – Gemisch zu fett im Leerlauf",
+      "system": "Motor"
+    },
+    {
+      "vag": 16502,
+      "sae": "P0118",
+      "text": "Geber für Kühlmitteltemperatur G62 – Signal zu groß",
+      "system": "Motor"
+    }
+  ]
+}

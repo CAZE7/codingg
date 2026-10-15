@@ -1,0 +1,10 @@
+; generic.lbl
+; Ersatz-Labeldatei fuer Steuergeraete ohne eigene Beschreibung.
+; VAGDiag Studio zeigt Messwerte dann mit dem Rohdatentyp an.
+
+:001,0
+001,0,Messwerteblock 001
+001,1,Messwert 1,?,roh,0,255
+001,2,Messwert 2,?,roh,0,255
+001,3,Messwert 3,?,roh,0,255
+001,4,Messwert 4,?,roh,0,255

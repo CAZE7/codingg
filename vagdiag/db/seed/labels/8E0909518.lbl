@@ -1,0 +1,41 @@
+; 8E0-909-518.lbl
+; 1.8l 20V Turbo AVJ (Audi A4 B6) - ME7.5, KWP2000 ueber CAN (VW TP 2.0)
+;
+; Spalten: Block,Feld,Text,Kurztext,Einheit,Min,Max
+; Einheit "?" = Anzeige uebernimmt die Einheit der Sensortyp-Formel.
+
+:001,0
+001,0,Motordrehzahl,Last,Kühlmitteltemperatur,Lambdaregelung
+001,1,Motordrehzahl,0.2*A*B,1/min,700,6800
+001,2,Last / Füllung,0.002*A*B,%,0,100
+001,3,Kühlmitteltemperatur,A*(B-100)*0.1,°C,-40,120
+001,4,Lambdaspannung Bank 1,?,V,0.1,0.9
+
+:002,0
+002,0,Ansauglufttemperatur,Zuendwinkel,Einspritzzeit,Luftmasse
+002,1,Ansauglufttemperatur,A*(B-100)*0.1,°C,-40,120
+002,2,Zündwinkel,0.002*A*B,°KW,-10,45
+002,3,Einspritzzeit,0.01*A*B,ms,0.5,20.0
+002,4,Luftmasse (Ist),?,g/s,2.0,120.0
+
+:003,0
+003,0,Ladedruck,Drosselklappenwinkel,Lambda,Bordnetzspannung
+003,1,Ladedruck (Ist),0.005*A*B,bar,0.5,1.8
+003,2,Drosselklappenwinkel,0.002*A*B,%,0,100
+003,3,Lambdaverhaeltnis,?,λ,0.85,1.15
+003,4,Bordnetzspannung,0.001*A*B,V,9.0,15.0
+
+:010,0
+010,0,Geschwindigkeit,Drehzahl,Ladedruck (Soll/Ist)
+010,1,Geschwindigkeit,0.01*A*B,km/h,0,240
+010,2,Motordrehzahl,0.2*A*B,1/min,700,6800
+010,3,Ladedruck (Soll),0.005*A*B,bar,0.5,1.8
+010,4,Ladedruck (Ist),0.005*A*B,bar,0.5,1.8
+
+C00,Codierung Motorsteuergerät
+C01,00001 = Frontantrieb, Schaltgetriebe
+C02,00002 = Allradantrieb (quattro)
+C03,00003 = Frontantrieb, Automatikgetriebe
+C04,00004 = Allradantrieb, Automatikgetriebe
+L01,Adaption Leerlaufdrehzahl
+L02,Adaption Lambda-Regelung

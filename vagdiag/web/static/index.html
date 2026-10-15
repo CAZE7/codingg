@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VAGDiag Studio - VCDS-Nachbau</title>
+<style>
+  :root {
+    --bg: #141a24;
+    --panel: #1e2734;
+    --panel-2: #263140;
+    --line: #33415a;
+    --text: #dbe6f5;
+    --dim: #8fa3bf;
+    --accent: #4da3ff;
+    --accent-2: #2b7fd4;
+    --ok: #46c37b;
+    --warn: #f0b429;
+    --err: #ef5f5f;
+    --mono: "Consolas", "DejaVu Sans Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 14px;
+  }
+  header {
+    display: flex; align-items: center; gap: 16px; padding: 10px 16px;
+    background: linear-gradient(180deg, #2b3648 0%, #1c2532 100%);
+    border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .5px; }
+  header h1 span { color: var(--accent); }
+  header .sub { color: var(--dim); font-size: 12px; }
+  header .spacer { flex: 1; }
+  select, input, button { font-family: inherit; font-size: 13px; }
+  select, input[type=text] {
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 4px; padding: 6px 8px;
+  }
+  button {
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+    border: 1px solid #1e5fa3; color: #fff; padding: 7px 12px; border-radius: 4px;
+    cursor: pointer;
+  }
+  button.secondary { background: var(--panel-2); border-color: var(--line); color: var(--text); }
+  button.danger { background: linear-gradient(180deg, #e06060 0%, #b83b3b 100%); border-color: #8f2f2f; }
+  button:disabled { opacity: .5; cursor: default; }
+  .layout { display: flex; gap: 12px; padding: 12px; align-items: flex-start; }
+  .sidebar { width: 330px; flex: 0 0 330px; display: flex; flex-direction: column; gap: 12px; }
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  .card h2 {
+    margin: 0; padding: 8px 12px; font-size: 13px; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--dim); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .right { margin-left: auto; font-size: 12px; text-transform: none; letter-spacing: 0; }
+  .card .body { padding: 10px 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 5px 6px; border-bottom: 1px solid #2b3547; font-size: 13px; }
+  th { color: var(--dim); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  tr.module { cursor: pointer; }
+  tr.module:hover { background: #2b3648; }
+  tr.module.active { background: #2f4d74; }
+  .addr { font-family: var(--mono); color: var(--accent); }
+  .badge {
+    display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 11px;
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--dim);
+  }
+  .badge.faults { color: #ffd88a; border-color: #6b5620; background: #3a2f13; }
+  .badge.none { color: var(--ok); border-color: #245c3c; background: #16301f; }
+  .live { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .live .item { background: var(--panel-2); border: 1px solid var(--line); border-radius: 4px; padding: 6px 8px; }
+  .live .item .k { color: var(--dim); font-size: 11px; text-transform: uppercase; }
+  .live .item .v { font-family: var(--mono); font-size: 18px; }
+  .tabs { display: flex; gap: 2px; padding: 6px 8px 0 8px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .tabs button {
+    background: transparent; border: 1px solid transparent; border-bottom: none; color: var(--dim);
+    border-radius: 4px 4px 0 0; padding: 6px 12px;
+  }
+  .tabs button.active {
+    background: var(--panel-2); border-color: var(--line); color: var(--text);
+  }
+  .tabbody { padding: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  pre {
+    background: #10151d; border: 1px solid var(--line); border-radius: 4px; padding: 10px;
+    font-family: var(--mono); font-size: 12px; white-space: pre-wrap; max-height: 420px;
+    overflow: auto; margin: 0;
+  }
+  .bar { height: 8px; background: #10151d; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .bar > div { height: 100%; background: linear-gradient(90deg, #2b7fd4, var(--accent)); }
+  .field { margin-bottom: 8px; }
+  .field .label { display: flex; justify-content: space-between; font-size: 13px; }
+  .field .value { font-family: var(--mono); color: #cfe4ff; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .fault { border-left: 3px solid var(--warn); background: #221f16; padding: 6px 8px; margin-bottom: 6px; border-radius: 3px; }
+  .fault.uds { border-left-color: var(--err); }
+  .fault .code { font-family: var(--mono); color: #ffd88a; }
+  .status { padding: 8px 12px; font-size: 13px; color: var(--dim); }
+  .status.error { color: var(--err); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .hidden { display: none !important; }
+  footer { color: var(--dim); font-size: 12px; padding: 4px 16px 16px; }
+  a { color: var(--accent); }
+  @media (max-width: 900px) {
+    .layout { flex-direction: column; }
+    .sidebar { width: 100%; flex: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1><span>VAGDiag</span> Studio <span id="version"></span></h1>
+    <div class="sub">Quelloffener VCDS-Nachbau - Diagnose für VW / Audi / Seat / Škoda</div>
+  </div>
+  <div class="spacer"></div>
+  <label class="muted" for="vehicle">Fahrzeug</label>
+  <select id="vehicle"></select>
+  <button id="scanBtn">Autoscan</button>
+  <span class="badge" id="conn">verbunden</span>
+</header>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="card">
+      <h2>Fahrzeugzustand <span class="right" id="phase"></span></h2>
+      <div class="body live" id="live"></div>
+    </div>
+    <div class="card">
+      <h2>Steuergeräte <span class="right" id="moduleCount"></span></h2>
+      <table>
+        <thead><tr><th>Adr.</th><th>Bezeichnung</th><th>Fehler</th></tr></thead>
+        <tbody id="modules"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="card">
+      <h2 id="moduleTitle">Kein Steuergerät gewählt</h2>
+      <div class="tabs" id="tabs">
+        <button data-tab="ident" class="active">Steuergerät</button>
+        <button data-tab="blocks">Messwerte</button>
+        <button data-tab="faults">Fehlerspeicher</button>
+        <button data-tab="adapt">Anpassung</button>
+        <button data-tab="coding">Codierung</button>
+        <button data-tab="trace">Protokoll</button>
+      </div>
+
+      <div class="tabbody" id="tab-ident">
+        <div class="grid2">
+          <div>
+            <table id="identTable"></table>
+            <p class="muted" id="identHint">Steuergerät in der Liste links wählen.</p>
+          </div>
+          <div>
+            <h3 class="muted">Identifikationsblock</h3>
+            <pre id="identText">-</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabbody hidden" id="tab-blocks">
+        <div class="row" style="margin-bottom:10px">
+          <label class="muted">Messwerteblock</label>
+          <select id="groupSelect"></select>
+          <label class="muted"><input type="checkbox" id="basicCheck"> Grundeinstellung</label>
+          <button class="secondary" id="blockHold">Anhalten</button>
+          <span class="muted" id="blockInfo"></span>
+        </div>
+        <div id="blockFields" class="grid2"></div>
+      </div>
+
+      <div class="tabbody hidden" id="tab-faults">
+        <div class="row" style="margin-bottom:10px">
+          <button class="secondary" id="faultRead">Fehlerspeicher lesen</button>
+          <button class="danger" id="faultClear">Fehlerspeicher löschen</button>
+          <span class="muted" id="faultInfo"></span>
+        </div>
+        <div id="faultList"></div>
+      </div>
+
+      <div class="tabbody hidden" id="tab-adapt">
+        <div class="row" style="margin-bottom:10px">
+          <button class="secondary" id="adaptRead">Kanäle lesen</button>
+          <span class="muted">Wert ändern und speichern (Login 12233 für viele Steuergeräte).</span>
+        </div>
+        <table id="adaptTable"></table>
+      </div>
+
+      <div class="tabbody hidden" id="tab-coding">
+        <div class="row" style="margin-bottom:10px">
+          <label class="muted">Codierung</label>
+          <input type="text" id="codingValue" size="10">
+          <input type="text" id="loginValue" size="8" placeholder="Login">
+          <button id="codingWrite">Schreiben</button>
+          <span class="muted" id="codingInfo"></span>
+        </div>
+        <table id="codingTable"></table>
+      </div>
+
+      <div class="tabbody hidden" id="tab-trace">
+        <div class="row" style="margin-bottom:10px">
+          <button class="secondary" id="traceRefresh">Aktualisieren</button>
+          <label class="muted"><input type="checkbox" id="traceAuto"> automatisch</label>
+        </div>
+        <pre id="traceText">-</pre>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card" id="scanCard" style="display:none">
+      <h2>Autoscan <span class="right" id="scanSummary"></span>
+        <button class="secondary" id="scanCopy" style="margin-left:8px">Bericht kopieren</button>
+      </h2>
+      <div class="body">
+        <pre id="scanReport"></pre>
+      </div>
+    </div>
+
+    <footer>
+      Datenbank: <span id="dbInfo">-</span> &nbsp;|&nbsp; Simulation mit virtuellem K-Line- und
+      CAN-Bus (kein Original-Interface angeschlossen).
+    </footer>
+  </div>
+</div>
+
+<script>
+"use strict";
+const api = {
+  async get(path) {
+    const response = await fetch(path, { headers: { "Accept": "application/json" } });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || response.statusText);
+    return data;
+  },
+  async post(path, body) {
+    const response = await fetch(path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || response.statusText);
+    return data;
+  },
+};
+
+const ui = {
+  state: null,
+  address: null,
+  module: null,
+  lastBlock: null,
+  holdBlock: false,
+  traceAuto: false,
+};
+
+const $ = (id) => document.getElementById(id);
+
+function setStatus(text, isError) {
+  const node = $("status");
+  node.textContent = text || "";
+  node.classList.toggle("error", !!isError);
+}
+
+function hex(value) {
+  return "0x" + Number(value).toString(16).toUpperCase().padStart(2, "0");
+}
+
+function fmt(value, unit, digits) {
+  if (value === null || value === undefined) return "-";
+  let text = typeof value === "number"
+    ? value.toLocaleString("de-DE", { minimumFractionDigits: digits ?? 0, maximumFractionDigits: digits ?? 1 })
+    : String(value);
+  return unit ? `${text} ${unit}` : text;
+}
+
+/* ---------------------------------------------------------------- Fahrzeug */
+async function loadState() {
+  ui.state = await api.get("/api/state");
+  $("version").textContent = ui.state.app.version;
+  $("phase").textContent = ui.state.phase || "";
+  const live = [
+    ["Phase", ui.state.phase || "-", ""],
+    ["Drehzahl", fmt(ui.state.rpm, "1/min"), ""],
+    ["Geschwindigkeit", fmt(ui.state.speed, "km/h", 1), ""],
+    ["Kühlmittel", fmt(ui.state.coolant, "°C", 1), ""],
+    ["Ladedruck", fmt(ui.state.boost, "mbar"), ""],
+    ["Batterie", fmt(ui.state.battery, "V", 2), ""],
+    ["Kraftstoff", fmt(ui.state.fuel, "l", 1), ""],
+    ["Kilometerstand", fmt(ui.state.odo, "km"), ""],
+  ];
+  $("live").innerHTML = live.map(([k, v]) => (
+    `<div class="item"><div class="k">${k}</div><div class="v">${v}</div></div>`
+  )).join("");
+  renderModules();
+  if (!ui.address && ui.state.modules.length) {
+    const engine = ui.state.modules.find((m) => m.address === 1) || ui.state.modules[0];
+    selectModule(engine.address);
+  }
+  $("dbInfo").textContent =
+    `${ui.state.database.schema_version ? "Schema " + ui.state.database.schema_version : ""}` +
+    `, ${ui.state.stats.dtc} Fehlercodes, ${ui.state.stats.label_file} Labeldateien, ` +
+    `${ui.state.stats.measuring_block} Messwerteinträge, Stand ${ui.state.database.built_at || "-"}`;
+}
+
+function renderModules() {
+  if (!ui.state) return;
+  const faults = ui.state.last_scan ? Object.fromEntries(
+    ui.state.last_scan.modules.map((m) => [m.address, m.fault_count])
+  ) : {};
+  $("moduleCount").textContent = `${ui.state.modules.length} Adressen`;
+  $("modules").innerHTML = ui.state.modules.map((m) => {
+    const count = faults[m.address];
+    const badge = count === undefined
+      ? `<span class="badge">?</span>`
+      : (count ? `<span class="badge faults">${count}</span>` : `<span class="badge none">ok</span>`);
+    return `<tr class="module ${m.address === ui.address ? "active" : ""}" data-address="${m.address}">
+      <td class="addr">${hex(m.address)}</td>
+      <td>${m.name}<div class="muted">${m.protocol}${m.bus ? " / " + m.bus : ""}</div></td>
+      <td>${badge}</td></tr>`;
+  }).join("");
+  document.querySelectorAll("tr.module").forEach((row) => {
+    row.addEventListener("click", () => selectModule(Number(row.dataset.address)));
+  });
+}
+
+/* --------------------------------------------------------------- Steuergerät */
+async function selectModule(address) {
+  ui.address = address;
+  ui.module = null;
+  ui.lastBlock = null;
+  renderModules();
+  try {
+    const info = await api.get(`/api/module/${address}`);
+    ui.module = info;
+    renderModule(info);
+    setStatus(`${hex(address)} ${info.ident.name} - ${info.ident.protocol}`);
+  } catch (error) {
+    setStatus(`0x${address.toString(16).toUpperCase()}: ${error.message}`, true);
+  }
+}
+
+function renderModule(info) {
+  $("moduleTitle").textContent =
+    `Adresse ${info.address_text}: ${info.ident.name} (${info.ident.part_number})`;
+  const rows = [
+    ["Transport", info.ident.protocol],
+    ["Teilenummer", info.ident.part_number],
+    ["Bauteil", info.ident.component],
+    ["Software", info.ident.software],
+    ["Codierung", info.ident.coding_text],
+    ["Werkstattcode", info.ident.workshop_code_text],
+    ["Labeldatei", info.ident.label_file],
+    ["Messwerteblöcke", (info.blocks || []).join(", ") || "-"],
+  ];
+  $("identTable").innerHTML = rows.map(([k, v]) => (
+    `<tr><th style="width:38%">${k}</th><td>${v || "-"}</td></tr>`
+  )).join("");
+  $("identText").textContent = info.ident.text || "-";
+  $("codingValue").value = info.coding.coding ?? "";
+  $("codingTable").innerHTML = (info.coding.options || []).map((option) => (
+    `<tr><th>${option.kind === "L" ? "Kanal " + option.block : "Gruppe " + option.block}</th>
+     <td>${option.bit !== null && option.bit !== undefined ? "Bit " + option.bit : ""}</td>
+     <td>${option.value ?? ""}</td><td>${option.text || ""}</td></tr>`
+  )).join("") || `<tr><td class="muted">Keine Codierhilfe in der Labeldatei.</td></tr>`;
+  $("adaptTable").innerHTML = (info.adaptations || []).map((channel) => (
+    `<tr data-channel="${channel.channel}">
+      <th style="width:70px">Kanal ${channel.channel}</th>
+      <td>${channel.text || ""}<div class="muted">${channel.min_value ?? ""} - ${channel.max_value ?? ""} ${channel.unit || ""}</div></td>
+      <td style="width:120px"><input type="text" id="adapt-${channel.channel}" size="8"></td>
+      <td style="width:90px"><button class="secondary" data-adapt="${channel.channel}">Speichern</button></td>
+     </tr>`
+  )).join("") || `<tr><td class="muted">Keine Anpassungskanäle hinterlegt.</td></tr>`;
+  document.querySelectorAll("button[data-adapt]").forEach((button) => {
+    button.addEventListener("click", () => writeAdaptation(Number(button.dataset.adapt)));
+  });
+  const select = $("groupSelect");
+  select.innerHTML = (info.blocks || []).map((group) => (
+    `<option value="${group}">${String(group).padStart(3, "0")}</option>`
+  )).join("");
+  if (!info.blocks || !info.blocks.length) {
+    select.innerHTML = `<option value="1">001</option>`;
+  }
+}
+
+async function saveCoding() {
+  if (!ui.address) return;
+  try {
+    const body = { value: $("codingValue").value };
+    if ($("loginValue").value) body.login = $("loginValue").value;
+    const result = await api.post(`/api/coding/${ui.address}`, body);
+    $("codingInfo").textContent = `gespeichert: ${result.coding ?? ""}`;
+    setStatus("Codierung geschrieben - neuer Wert " + (result.coding ?? ""));
+    selectModule(ui.address);
+  } catch (error) {
+    setStatus("Codierung: " + error.message, true);
+  }
+}
+
+async function writeAdaptation(channel) {
+  const input = $(`adapt-${channel}`);
+  try {
+    const result = await api.post(`/api/adapt/${ui.address}`, {
+      channel: channel, value: Number(input.value),
+    });
+    setStatus(`Kanal ${channel} gespeichert: ${result.value}`);
+  } catch (error) {
+    setStatus(`Kanal ${channel}: ${error.message}`, true);
+  }
+}
+
+async function readAdaptations() {
+  if (!ui.address) return;
+  const data = await api.get(`/api/adapt/${ui.address}`);
+  for (const channel of data.channels || []) {
+    try {
+      const current = await api.get(`/api/adapt/${ui.address}?channel=${channel.channel}`);
+      const input = $(`adapt-${channel.channel}`);
+      if (input) input.value = current.value ?? "";
+    } catch (error) { /* Kanal nicht lesbar */ }
+  }
+  setStatus(`Anpassungskanäle gelesen (${(data.channels || []).length}).`);
+}
+
+/* ------------------------------------------------------------------ Messwerte */
+async function pollBlock() {
+  if (!ui.address || ui.holdBlock) return;
+  const group = Number($("groupSelect").value || 1);
+  const basic = $("basicCheck").checked ? 1 : 0;
+  try {
+    const block = await api.get(`/api/blocks/${ui.address}?group=${group}&basic=${basic}`);
+    ui.lastBlock = block;
+    renderBlock(block);
+  } catch (error) {
+    $("blockFields").innerHTML = `<div class="muted">${error.message}</div>`;
+  }
+}
+
+function renderBlock(block) {
+  $("blockInfo").textContent = `${block.title} (Label ${block.label || "-"})`;
+  $("blockFields").innerHTML = (block.fields || []).map((field) => {
+    const min = field.min_value ?? null;
+    const max = field.max_value ?? null;
+    let ratio = 0.5;
+    if (typeof field.value === "number" && min !== null && max !== null && max > min) {
+      ratio = Math.max(0, Math.min(1, (field.value - min) / (max - min)));
+    } else if (typeof field.value === "number") {
+      ratio = Math.max(0.02, Math.min(1, field.value / 200));
+    }
+    return `<div class="field">
+      <div class="label"><span>${field.text}</span>
+        <span class="value">${field.display_full || field.display}</span></div>
+      <div class="bar"><div style="width:${(ratio * 100).toFixed(1)}%"></div></div>
+      <div class="muted">Feld ${field.field} - Sensorart ${field.sensor_id} (A=${field.a}, B=${field.b})${field.unit_hint ? " - Label: " + field.unit_hint : ""}</div>
+    </div>`;
+  }).join("");
+}
+
+/* -------------------------------------------------------------- Fehlerspeicher */
+function renderFaults(faults, info) {
+  $("faultInfo").textContent = info || "";
+  if (!faults || !faults.length) {
+    $("faultList").innerHTML = `<div class="badge none">Kein Fehlercode gespeichert</div>`;
+    return;
+  }
+  $("faultList").innerHTML = faults.map((fault) => (
+    `<div class="fault ${fault.status_text && fault.status_text.includes("(") ? "uds" : ""}">
+      <div><span class="code">${fault.code}</span>
+        <span class="muted">${fault.status_text || ""}</span></div>
+      <div>${fault.text || "(kein Eintrag in der Datenbank)"}</div>
+      <div class="muted">${fault.source || ""}</div>
+    </div>`
+  )).join("");
+}
+
+async function readFaults() {
+  if (!ui.address) return;
+  try {
+    const data = await api.get(`/api/faults/${ui.address}`);
+    renderFaults(data.faults, `${data.faults.length} Einträge`);
+    setStatus(`${hex(ui.address)}: ${data.faults.length} Fehlereinträge gelesen.`);
+  } catch (error) {
+    setStatus("Fehlerspeicher: " + error.message, true);
+  }
+}
+
+async function clearFaults() {
+  if (!ui.address) return;
+  try {
+    const data = await api.post(`/api/faults/${ui.address}`, { clear: true });
+    renderFaults(data.faults, "nach dem Löschen");
+    setStatus(`${hex(ui.address)}: Fehlerspeicher gelöscht.`);
+  } catch (error) {
+    setStatus("Löschen: " + error.message, true);
+  }
+}
+
+/* -------------------------------------------------------------------- Autoscan */
+async function runScan() {
+  const button = $("scanBtn");
+  button.disabled = true;
+  button.textContent = "Scan läuft ...";
+  try {
+    const data = await api.post("/api/scan", {});
+    $("scanCard").style.display = "";
+    $("scanReport").textContent = data.report;
+    const result = data.result;
+    $("scanSummary").textContent =
+      `${result.modules_found}/${result.modules_total} Steuergeräte, ${result.fault_count} Fehler, ` +
+      `${result.duration}s`;
+    await loadState();
+    setStatus("Autoscan abgeschlossen.");
+  } catch (error) {
+    setStatus("Autoscan: " + error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Autoscan";
+  }
+}
+
+/* -------------------------------------------------------------------- Protokoll */
+async function loadTrace() {
+  const entries = await api.get("/api/trace?count=120");
+  $("traceText").textContent = entries.map((entry) => {
+    const time = new Date((entry.ts || 0) * 1000).toLocaleTimeString("de-DE");
+    const id = entry.arbitration_id !== null && entry.arbitration_id !== undefined
+      ? "0x" + Number(entry.arbitration_id).toString(16).toUpperCase().padStart(3, "0") : "";
+    const data = entry.data ? entry.data.replace(/(..)/g, "$1 ").trim().toUpperCase() : "";
+    return `${time}  ${(entry.source || "").padEnd(10)} ${(entry.kind || "").padEnd(6)} ${id} ${data} ${entry.text || ""}`;
+  }).join("\n");
+}
+
+/* ----------------------------------------------------------------------- Start */
+function bindTabs() {
+  document.querySelectorAll("#tabs button").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll("#tabs button").forEach((b) => b.classList.remove("active"));
+      button.classList.add("active");
+      ["ident", "blocks", "faults", "adapt", "coding", "trace"].forEach((tab) => {
+        $(`tab-${tab}`).classList.toggle("hidden", tab !== button.dataset.tab);
+      });
+      if (button.dataset.tab === "blocks") pollBlock();
+      if (button.dataset.tab === "faults") readFaults();
+      if (button.dataset.tab === "trace") loadTrace();
+    });
+  });
+}
+
+async function main() {
+  bindTabs();
+  $("scanBtn").addEventListener("click", runScan);
+  $("scanCopy").addEventListener("click", () => {
+    navigator.clipboard.writeText($("scanReport").textContent);
+    setStatus("Bericht in der Zwischenablage.");
+  });
+  $("faultRead").addEventListener("click", readFaults);
+  $("faultClear").addEventListener("click", clearFaults);
+  $("adaptRead").addEventListener("click", readAdaptations);
+  $("codingWrite").addEventListener("click", saveCoding);
+  $("blockHold").addEventListener("click", () => {
+    ui.holdBlock = !ui.holdBlock;
+    $("blockHold").textContent = ui.holdBlock ? "Weiter" : "Anhalten";
+  });
+  $("groupSelect").addEventListener("change", pollBlock);
+  $("basicCheck").addEventListener("change", pollBlock);
+  $("traceRefresh").addEventListener("click", loadTrace);
+  $("traceAuto").addEventListener("change", (event) => {
+    ui.traceAuto = event.target.checked;
+    if (ui.traceAuto) loadTrace();
+  });
+  $("vehicle").addEventListener("change", async (event) => {
+    setStatus("Fahrzeug wird gewechselt ...");
+    try {
+      await api.post("/api/vehicle", { name: event.target.value });
+      ui.address = null;
+      await loadState();
+      setStatus("Fahrzeug gewechselt: " + event.target.value);
+    } catch (error) {
+      setStatus("Fahrzeugwechsel: " + error.message, true);
+    }
+  });
+
+  try {
+    const data = await api.get("/api/state");
+    const select = $("vehicle");
+    select.innerHTML = `<option>${data.vehicle}</option>`;
+    await loadState();
+    buildVehicleOptions();
+  } catch (error) {
+    setStatus("Start: " + error.message, true);
+  }
+
+  setInterval(async () => {
+    try {
+      const state = await api.get("/api/state");
+      ui.state = state;
+      $("phase").textContent = state.phase || "";
+      const live = [
+        ["Phase", state.phase || "-", ""],
+        ["Drehzahl", fmt(state.rpm, "1/min"), ""],
+        ["Geschwindigkeit", fmt(state.speed, "km/h", 1), ""],
+        ["Kühlmittel", fmt(state.coolant, "°C", 1), ""],
+        ["Ladedruck", fmt(state.boost, "mbar"), ""],
+        ["Batterie", fmt(state.battery, "V", 2), ""],
+        ["Kraftstoff", fmt(state.fuel, "l", 1), ""],
+        ["Kilometerstand", fmt(state.odo, "km"), ""],
+      ];
+      $("live").innerHTML = live.map(([k, v]) => (
+        `<div class="item"><div class="k">${k}</div><div class="v">${v}</div></div>`
+      )).join("");
+      $("conn").textContent = state.started ? "verbunden" : "gestoppt";
+      if (document.querySelector("#tabs button.active").dataset.tab === "blocks") {
+        pollBlock();
+      }
+      if (ui.traceAuto) loadTrace();
+    } catch (error) {
+      $("conn").textContent = "offline";
+    }
+  }, 1000);
+}
+
+async function buildVehicleOptions() {
+  try {
+    const data = await api.get("/api/vehicles");
+    const current = $("vehicle").value;
+    $("vehicle").innerHTML = data.vehicles.map((vehicle) => (
+      `<option value="${vehicle.name}" ${vehicle.name === current ? "selected" : ""}>` +
+      `${vehicle.name}</option>`
+    )).join("");
+  } catch (error) { /* Fahrzeugliste bleibt einstellig */ }
+}
+
+main();
+</script>
+</body>
+</html>

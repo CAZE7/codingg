@@ -1,0 +1,41 @@
+; 03G-906-016.lbl
+; 2.0l TDI BKD (Pumpe-Düse, UDS-Diagnose)
+
+:001,0
+001,0,Einspritzmenge
+001,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+001,2,Einspritzmenge,?,mg/Hub,3.0,60.0
+001,3,Einspritzdauer,?,ms,0.2,1.5
+001,4,Kühlmitteltemperatur,?,°C,-40,120
+
+:002,0
+002,0,Ladedruck
+002,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+002,2,Ladedruck (Soll),?,mbar,900,2500
+002,3,Ladedruck (Ist),?,mbar,900,2500
+002,4,Ladelufttemperatur,?,°C,-40,120
+
+:003,0
+003,0,Abgasrückführung
+003,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+003,2,AGR-Ventil Ansteuerung,?,%,0,100
+003,3,Luftmasse (Ist),?,mg/Hub,200,900
+003,4,AGR-Ventil Stellung,?,%,0,100
+
+:004,0
+004,0,Partikelfilter
+004,1,Aschemasse,?,g,0,200
+004,2,Russmasse berechnet,?,g,0,80
+004,3,Differenzdruck,?,mbar,0,400
+004,4,Strecke seit Regeneration,?,km,0,1000
+
+:005,0
+005,0,Kraftstoffsystem
+005,1,Raildruck (Soll),?,bar,0,1800
+005,2,Raildruck (Ist),?,bar,0,1800
+005,3,Kraftstofftemperatur,?,°C,-40,120
+005,4,Druckregelventil,?,%,0,100
+
+B004,0,Grundeinstellung Partikelfilter-Regeneration
+C00,Codierung Motorsteuergerät
+L01,Adaption Leerlaufdrehzahl

@@ -1,0 +1,77 @@
+; 038-906-018-G.lbl
+; Label-Datei fuer 1.9l TDI ALH (VP37-Verteilereinspritzpumpe, EDC15)
+; VAGDiag Studio - Beispiel-Label-Datei im VCDS-Format.
+; Syntax: 'NNN,F,Text[,Kurztext,Einheit,Min,Max]' = Messwerteblock NNN, Feld F.
+;         'B001,F,Text' = Grundeinstellung, ';' = Kommentar, 'Redir:' = Verweis.
+
+:001,0
+001,0,Grundeinstellung (Leerlauf)
+001,1,Motordrehzahl,0.2*A*B,1/min,780,950
+001,2,Einspritzmenge,?,mg/Hub,3.0,7.0
+001,3,Spannung Modulationskolbenweg,?,V,0.5,4.5
+001,4,Kühlmitteltemperatur,?,°C,80,100
+
+:002,0
+002,0,Leerlaufdrehzahl
+002,1,Motordrehzahl,0.2*A*B,1/min,780,950
+002,2,Gaspedalstellung,?,%,0,100
+002,3,Betriebszustand,,,0,255
+002,4,Kühlmitteltemperatur,?,°C,80,100
+
+:003,0
+003,0,Abgasrückführung (AGR)
+003,1,Motordrehzahl,0.2*A*B,1/min,780,950
+003,2,Luftmasse (Ist),?,mg/Hub,230,370
+003,3,Luftmasse (Soll),?,mg/Hub,230,370
+003,4,AGR-Ventil Ansteuerung,?,%,0,100
+
+:004,0
+004,0,Einspritzbeginn
+004,1,Motordrehzahl,0.2*A*B,1/min,780,950
+004,2,Einspritzbeginn (Ist),?,°vor OT,0,20
+004,3,Einspritzbeginn (Soll),?,°vor OT,0,20
+004,4,Förderdauer,?,?,0,20
+
+:010,0
+010,0,Kraftstoffsystem
+010,1,Luftmasse (Ist),?,mg/Hub,230,370
+010,2,Absoluter Saugrohrdruck,?,mbar,900,1100
+010,3,Umgebungsdruck,?,mbar,900,1100
+010,4,Gaspedalstellung,?,%,0,100
+
+:011,0
+011,0,Ladedruckregelung
+011,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+011,2,Ladedruck (Soll),?,mbar,900,1900
+011,3,Ladedruck (Ist),?,mbar,900,1900
+011,4,N75-Ansteuerung,?,%,0,100
+
+:013,0
+013,0,Leerlaufstabilisierung
+013,1,Einspritzmenge (Ist),?,mg/Hub,3.0,8.0
+013,2,Einspritzmenge (Soll),?,mg/Hub,3.0,8.0
+013,3,Korrektur Zylinder 1,?,mg/Hub,-3,3
+013,4,Korrektur Zylinder 2,?,mg/Hub,-3,3
+
+:015,0
+015,0,Kraftstoffverbrauch
+015,1,Motordrehzahl,0.2*A*B,1/min,780,4500
+015,2,Einspritzmenge,?,mg/Hub,3.0,50.0
+015,3,Verbrauch,?,l/h,0.5,30.0
+015,4,Kraftstofftemperatur,?,°C,-10,80
+
+; --- Grundeinstellungsbloecke (B...) ---
+B001,0,Grundeinstellung Förderbeginn (Einspritzpumpe einstellen)
+B004,0,Grundeinstellung Einspritzbeginn
+B011,0,Grundeinstellung Ladedruckregelung
+
+; --- Codierhilfe (C..) ---
+C00,Codierung Motorsteuergerät
+C01,1,2,Schaltgetriebe
+C01,2,5,Automatikgetriebe
+C01,6,1,Allradantrieb
+
+; --- Anpassungshilfe (L..) ---
+L03,Adaption AGR-Menge (Abgasrückführung)
+L04,Adaption Einspritzbeginn (Förderbeginn)
+L05,Adaption Leerlaufdrehzahl

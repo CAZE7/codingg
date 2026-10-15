@@ -1,0 +1,28 @@
+; 3B0-907-469.lbl
+; Diagnoseinterface / CAN-Gateway
+
+:001,0
+001,0,Gateway-Verbauinformation
+001,1,Verbauliste Motor,?,verbaut,0,1
+001,2,Verbauliste ABS,?,verbaut,0,1
+001,3,Verbauliste Kombi,?,verbaut,0,1
+001,4,Verbauliste Airbag,?,verbaut,0,1
+
+:002,0
+002,0,CAN-Bus-Status
+002,1,Antriebs-CAN,?,0=ok 1=Störung,0,1
+002,2,Komfort-CAN,?,0=ok 1=Störung,0,1
+002,3,Infotainment-CAN,?,0=ok 1=Störung,0,1
+002,4,Busruhe,?,ja/nein,0,1
+
+:003,0
+003,0,Bordnetz
+003,1,Bordspannung,?,V,10,15
+003,2,Zündung,?,ein/aus,0,1
+003,3,Klemme 15,?,ein/aus,0,1
+003,4,Klemme 30,?,ein/aus,0,1
+
+C00,Codierung Gateway
+C01,1,1,Verbauliste: Radio
+C01,2,2,Verbauliste: Navigation
+C01,4,4,Verbauliste: Telefon

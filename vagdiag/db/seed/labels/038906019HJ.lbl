@@ -1,0 +1,5 @@
+; 038-906-019HJ.lbl
+; 1.9l TDI AVB (Passat B5.5, KWP2000 ueber K-Line)
+; Der VCDS-Satz 038906019HJ ist inhaltsgleich mit 038906019 - die
+; Messwertebloecke liegen deshalb in der Basisdatei.
+Redir: 038906019.lbl

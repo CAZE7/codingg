@@ -1,0 +1,318 @@
+{
+  "note": "VAG-Steuergeraeteadressen. Quelle: offizielle VCDS-Handbuecher (Abschnitt Steuergeraeteauswahl), VCDS-Wiki (forum.vcdspro.de) und Autoscan-Protokolle. Beschreibungen geprueft anhand mehrerer Fahrzeug-Autoscans.",
+  "source": "VCDS Handbuch / VCDS-Wiki (Ross-Tech Auto-Intern)",
+  "modules": [
+    {
+      "address": 1,
+      "name": "Motorsteuergerät",
+      "name_en": "Engine",
+      "category": "Motor",
+      "description": "Motorsteuerung, Einspritzung, Ladedruck",
+      "obd_relevant": 1
+    },
+    {
+      "address": 2,
+      "name": "Getriebesteuergerät",
+      "name_en": "Transmission",
+      "category": "Antrieb",
+      "description": "Automatik-/Doppelkupplungsgetriebe",
+      "obd_relevant": 1
+    },
+    {
+      "address": 3,
+      "name": "ABS/Bremsenelektronik",
+      "name_en": "ABS Brakes",
+      "category": "Fahrwerk",
+      "description": "ABS, ASR, ESP",
+      "obd_relevant": 1
+    },
+    {
+      "address": 4,
+      "name": "Lenkwinkelsensor",
+      "name_en": "Steering Angle Sensor",
+      "category": "Fahrwerk",
+      "description": "Lenkwinkelsensorik des ESP",
+      "obd_relevant": 0
+    },
+    {
+      "address": 5,
+      "name": "Wegfahrsperre (alt)",
+      "name_en": "Immobilizer",
+      "category": "Diebstahlschutz",
+      "description": "Wegfahrsperre der ersten Generation",
+      "obd_relevant": 0
+    },
+    {
+      "address": 6,
+      "name": "Sitzverstellung Beifahrer",
+      "name_en": "Seat Memory (Passenger)",
+      "category": "Komfort",
+      "description": "Elektrische Sitzverstellung/Spiegel Beifahrerseite",
+      "obd_relevant": 0
+    },
+    {
+      "address": 7,
+      "name": "Schalttafeleinsatz (alt)",
+      "name_en": "Dash Panel Insert",
+      "category": "Elektrik",
+      "description": "Kombiinstrument aelterer Plattformen",
+      "obd_relevant": 0
+    },
+    {
+      "address": 8,
+      "name": "Klima-/Heizungselektronik",
+      "name_en": "Auto HVAC",
+      "category": "Komfort",
+      "description": "Klimaanlage, Climatronic, Zuheizer",
+      "obd_relevant": 0
+    },
+    {
+      "address": 9,
+      "name": "Zentralelektrik / Bordnetzsteuergerät",
+      "name_en": "Central Electrics",
+      "category": "Elektrik",
+      "description": "Bordnetz, Licht, Wischer, Blinker",
+      "obd_relevant": 0
+    },
+    {
+      "address": 10,
+      "name": "Einparkhilfe",
+      "name_en": "Parking Aid",
+      "category": "Fahrerassistenz",
+      "description": "Ultraschall-Einparkhilfe",
+      "obd_relevant": 0
+    },
+    {
+      "address": 13,
+      "name": "Abstandsregelung (ACC)",
+      "name_en": "Distance Regulation",
+      "category": "Fahrerassistenz",
+      "description": "Abstandsregeltempomat",
+      "obd_relevant": 0
+    },
+    {
+      "address": 15,
+      "name": "Airbag",
+      "name_en": "Airbag",
+      "category": "Sicherheit",
+      "description": "Airbag- und Gurtstraffersteuerung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 16,
+      "name": "Lenkradelektronik",
+      "name_en": "Steering Wheel",
+      "category": "Elektrik",
+      "description": "Multifunktionslenkrad, Lenkstockschalter",
+      "obd_relevant": 0
+    },
+    {
+      "address": 17,
+      "name": "Schalttafeleinsatz / Kombiinstrument",
+      "name_en": "Instruments",
+      "category": "Elektrik",
+      "description": "Kombiinstrument, Wegfahrsperre, Serviceintervall",
+      "obd_relevant": 0
+    },
+    {
+      "address": 18,
+      "name": "Standheizung",
+      "name_en": "Auxiliary Heater",
+      "category": "Komfort",
+      "description": "Standheizung/Zuheizer",
+      "obd_relevant": 0
+    },
+    {
+      "address": 19,
+      "name": "Diagnoseinterface / Gateway",
+      "name_en": "Gateway",
+      "category": "Elektrik",
+      "description": "CAN-Gateway, Verbauinformation",
+      "obd_relevant": 0
+    },
+    {
+      "address": 22,
+      "name": "Allradantrieb",
+      "name_en": "AWD",
+      "category": "Antrieb",
+      "description": "Haldex-/Quattro-Steuerung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 25,
+      "name": "Wegfahrsperre",
+      "name_en": "Immobilizer",
+      "category": "Diebstahlschutz",
+      "description": "Elektronische Wegfahrsperre",
+      "obd_relevant": 0
+    },
+    {
+      "address": 34,
+      "name": "Niveauregulierung",
+      "name_en": "Level Control",
+      "category": "Fahrwerk",
+      "description": "Luftfederung/Niveauregulierung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 35,
+      "name": "Zentralverriegelung",
+      "name_en": "Central Locking",
+      "category": "Komfort",
+      "description": "Zentralverriegelung, Alarmanlage",
+      "obd_relevant": 0
+    },
+    {
+      "address": 36,
+      "name": "Sitzverstellung Fahrer",
+      "name_en": "Seat Memory (Driver)",
+      "category": "Komfort",
+      "description": "Elektrische Sitzverstellung/Spiegel Fahrerseite",
+      "obd_relevant": 0
+    },
+    {
+      "address": 37,
+      "name": "Navigation",
+      "name_en": "Navigation",
+      "category": "Infotainment",
+      "description": "Navigationsgeraet",
+      "obd_relevant": 0
+    },
+    {
+      "address": 42,
+      "name": "Türelektronik Fahrer",
+      "name_en": "Door Electronics (Driver)",
+      "category": "Komfort",
+      "description": "Fensterheber, Zentralverriegelung Fahrertuer",
+      "obd_relevant": 0
+    },
+    {
+      "address": 44,
+      "name": "Lenkhilfe",
+      "name_en": "Steering Assist",
+      "category": "Fahrwerk",
+      "description": "Elektromechanische Servolenkung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 45,
+      "name": "Innenraumüberwachung",
+      "name_en": "Interior Monitor",
+      "category": "Diebstahlschutz",
+      "description": "Innenraumueberwachung/Alarmanlage",
+      "obd_relevant": 0
+    },
+    {
+      "address": 46,
+      "name": "Komfortsystem / Zentralmodul Komfort",
+      "name_en": "Central Comfort",
+      "category": "Komfort",
+      "description": "Komfortsteuergeraet, Fensterheber, Diebstahlwarnanlage",
+      "obd_relevant": 0
+    },
+    {
+      "address": 47,
+      "name": "Soundsystem",
+      "name_en": "Sound System",
+      "category": "Infotainment",
+      "description": "Verstaerker/Soundsystem",
+      "obd_relevant": 0
+    },
+    {
+      "address": 49,
+      "name": "Innenraumbeleuchtung",
+      "name_en": "Interior Light",
+      "category": "Elektrik",
+      "description": "Innenraumlichtsteuerung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 52,
+      "name": "Türelektronik Beifahrer",
+      "name_en": "Door Electronics (Passenger)",
+      "category": "Komfort",
+      "description": "Fensterheber, Zentralverriegelung Beifahrertuer",
+      "obd_relevant": 0
+    },
+    {
+      "address": 53,
+      "name": "Feststellbremse",
+      "name_en": "Parking Brake",
+      "category": "Fahrwerk",
+      "description": "Elektromechanische Feststellbremse",
+      "obd_relevant": 0
+    },
+    {
+      "address": 55,
+      "name": "Leuchtweitenregulierung",
+      "name_en": "Headlight Range",
+      "category": "Elektrik",
+      "description": "Automatische Leuchtweitenregulierung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 56,
+      "name": "Radio",
+      "name_en": "Radio",
+      "category": "Infotainment",
+      "description": "Radio/Navigationssystem",
+      "obd_relevant": 0
+    },
+    {
+      "address": 57,
+      "name": "TV-Tuner",
+      "name_en": "TV Tuner",
+      "category": "Infotainment",
+      "description": "TV-Tuner",
+      "obd_relevant": 0
+    },
+    {
+      "address": 61,
+      "name": "Batterieregelung",
+      "name_en": "Battery Regulation",
+      "category": "Elektrik",
+      "description": "Batteriemanagement, Energieverwaltung",
+      "obd_relevant": 0
+    },
+    {
+      "address": 62,
+      "name": "Türelektronik hinten links",
+      "name_en": "Door Electronics (Rear Left)",
+      "category": "Komfort",
+      "description": "Fensterheber hinten links",
+      "obd_relevant": 0
+    },
+    {
+      "address": 65,
+      "name": "Reifendrucküberwachung",
+      "name_en": "Tire Pressure",
+      "category": "Fahrwerk",
+      "description": "Reifendruckkontrolle",
+      "obd_relevant": 0
+    },
+    {
+      "address": 69,
+      "name": "Anhängermodul",
+      "name_en": "Trailer",
+      "category": "Elektrik",
+      "description": "Anhaengerelektronik",
+      "obd_relevant": 0
+    },
+    {
+      "address": 75,
+      "name": "Telematik",
+      "name_en": "Telematics",
+      "category": "Infotainment",
+      "description": "Telematik-Notruf",
+      "obd_relevant": 0
+    },
+    {
+      "address": 77,
+      "name": "Telefon",
+      "name_en": "Telephone",
+      "category": "Infotainment",
+      "description": "Festeinbau-Telefon",
+      "obd_relevant": 0
+    }
+  ]
+}

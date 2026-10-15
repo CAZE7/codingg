@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Datenbank (jederzeit aus Schema und Seeds neu aufbaubar)
+var/
+
+
+# Arbeitsdateien
+*.log
+.DS_Store

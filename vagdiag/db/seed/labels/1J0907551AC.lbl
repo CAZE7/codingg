@@ -1,0 +1,45 @@
+; 1J0-907-551-AC.lbl
+; ABS/ESP MK60 (Golf IV, Bora, Passat B5.5)
+; VAGDiag Studio - Label-Datei im VCDS-Format.
+
+:001,0
+001,0,Raddrehzahlen
+001,1,Raddrehzahl vorne links,?,km/h,0,250
+001,2,Raddrehzahl vorne rechts,?,km/h,0,250
+001,3,Raddrehzahl hinten links,?,km/h,0,250
+001,4,Raddrehzahl hinten rechts,?,km/h,0,250
+
+:002,0
+002,0,Bremseneingang
+002,1,Bremslichtschalter,?,0/1,0,1
+002,2,Handbremsschalter,?,0/1,0,1
+002,3,ABS-Warnleuchte,?,0/1,0,1
+002,4,ESP-Taster,?,0/1,0,1
+
+:003,0
+003,0,Bremsdruck und Lenkwinkel
+003,1,Bremsdruck,?,bar,0,150
+003,2,Lenkwinkel,?,(°) ,-540,540
+003,3,Gierrate,?,(°/s),-50,50
+003,4,Querbeschleunigung,?,g,-1.5,1.5
+
+:005,0
+005,0,ESP-Sensorstatus
+005,1,Lenkwinkelsensor,?,initialisiert,0,1
+005,2,Querbeschleunigungssensor,?,ok,0,1
+005,3,Gierratensensor,?,ok,0,1
+005,4,Bremsdruckgeber,?,ok,0,1
+
+:006,0
+006,0,Sensorversorgung
+006,1,Versorgungsspannung,?,V,10,15
+006,2,Temperatur Steuergerät,?,°C,0,90
+006,3,Status ABS,?,aktiv/inaktiv,0,1
+006,4,Status ESP,?,aktiv/inaktiv,0,1
+
+B003,0,Grundeinstellung Lenkwinkelsensor (Fahrzeug gerade stellen)
+C00,Codierung ABS/ESP
+C01,1,1,ABS
+C01,2,2,ABS mit ASR
+C01,3,3,ESP
+L01,Adaption Reifenumfang
